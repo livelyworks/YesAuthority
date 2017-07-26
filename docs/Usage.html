@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]>       <html class="no-js ie6 oldie" lang="en"> <![endif]-->
+<!--[if IE 7]>          <html class="no-js ie7 oldie" lang="en"> <![endif]-->
+<!--[if IE 8]>          <html class="no-js ie8 oldie" lang="en"> <![endif]-->
+<!--[if gt IE 8]><!-->  <html class="no-js" lang="en"> <!--<![endif]-->
+<head>
+    <title>Usage - YesAuthority</title>
+    <meta name="description" content="Laravel Routes Authorization Library" />
+    <meta name="author" content="Vinod Raut">
+    <meta charset="UTF-8">
+    <link rel="icon" href="themes/daux/img/favicon-red.png" type="image/x-icon">
+    <!-- Mobile -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Font -->
+    <link href='https://fonts.googleapis.com/css?family=Roboto+Slab:400,100,300,700&subset=latin,cyrillic-ext,cyrillic' rel='stylesheet' type='text/css'>
+    <!-- CSS -->
+    <link href='themes/daux/css/theme-lw-red.min.css' rel='stylesheet' type='text/css'>
+            <!-- Tipue Search -->
+        <link href="tipuesearch/tipuesearch.css" rel="stylesheet">
+    
+    <!--[if lt IE 9]>
+    <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+</head>
+<body class=" ">
+    <div class="Columns content">
+    <aside class="Columns__left Collapsible">
+        <button type="button" class="Button Collapsible__trigger">
+            <span class="Collapsible__trigger--bar"></span>
+            <span class="Collapsible__trigger--bar"></span>
+            <span class="Collapsible__trigger--bar"></span>
+        </button>
+
+        <a class="Brand" href="index.html">YesAuthority</a>
+
+    <div class="Search">
+        <svg class="Search__icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 451 451">
+            <path d="M447.05 428l-109.6-109.6c29.4-33.8 47.2-77.9 47.2-126.1C384.65 86.2 298.35 0 192.35 0 86.25 0 .05 86.3.05 192.3s86.3 192.3 192.3 192.3c48.2 0 92.3-17.8 126.1-47.2L428.05 447c2.6 2.6 6.1 4 9.5 4s6.9-1.3 9.5-4c5.2-5.2 5.2-13.8 0-19zM26.95 192.3c0-91.2 74.2-165.3 165.3-165.3 91.2 0 165.3 74.2 165.3 165.3s-74.1 165.4-165.3 165.4c-91.1 0-165.3-74.2-165.3-165.4z"/>
+        </svg>
+        <input type="search" id="tipue_search_input" class="Search__field" placeholder="Search..." autocomplete="on"
+               results=25 autosave=text_search>
+    </div>
+
+        <div class="Collapsible__content">
+            <!-- Navigation -->
+            <ul class='Nav'><li class='Nav__item '><a href="Sample_Structure.html">Sample Structure</a></li><li class='Nav__item '><a href="Config.html">Config</a></li><li class='Nav__item Nav__item--active'><a href="Usage.html">Usage</a></li></ul>
+
+            <div class="Links">
+                
+                
+                            </div>
+        </div>
+    </aside>
+    <div class="Columns__right ">
+        <div class="Columns__right__content">
+            <div class="doc_content">
+                <article class="Page">
+
+    <div class="Page__header">
+        <h1><a href="Usage.html">Usage</a></h1>
+                <span style="float: left; font-size: 10px; color: gray;">
+            Wednesday, July 26, 2017 4:29 PM        </span>
+                    </div>
+
+
+    <div class="s-content">
+        <p>Now your all the accessibility is set and now you can use <a href="index.html"><code>YesAuthority</code></a> in your project for show, hide buttons or any element in html or get a <code>role</code> or <code>user</code> level permissions or create dynamic access permissions. To do all these things <a href="index.html"><code>YesAuthority</code></a> provide you a facade, helpers for instant access.</p>
+<h2 id="page_Facade">Facade</h2>
+<p>Before started you have to add use <a href="index.html"><code>YesAuthority</code></a> on the top of the your application and then use facade method. Following some facade method are available in <a href="index.html"><code>YesAuthority</code></a>.</p>
+<p>before use facade please go through following array of level.</p>
+<pre><code class="language-php">/*[
+    'CONFIG_ROLE'   =&gt; 1, // Config Role
+    'CONFIG_USER'   =&gt; 2, // Config User
+    'DB_ROLE'       =&gt; 3, // DB Role
+    'DB_USER'       =&gt; 4, // DB User
+    'CONDITIONS'    =&gt; 5, // Conditions
+]*/
+</code></pre>
+<h2 id="page_availableRoutes">availableRoutes</h2>
+<p><code>availableRoutes</code> method return array of allowed / public routes, it take 3 parameters which is explain below.</p>
+<ul>
+<li>
+<strong>isUriRequired</strong> - default this parameter is <code>false</code>, if you required uri along with route names then pass a first parameter as <code>true</code>.</li>
+<li>
+<strong>requestForUserId</strong> - default is logged in user id, if you pass other than logged in user id then it will return array of that user allow / public route.</li>
+<li>
+<strong>options</strong> - default is null, if you want to get a array of route from specific level then pass the first <code>check_level</code> key to this array and it will return array of allowed / public routes, if you pass <code>access_details =&gt; true</code> as second key then it will return array along with full detail of that route ids.</li>
+</ul>
+<pre><code class="language-php">YesAuthority::availableRoutes(false, null, ['check_level' =&gt; 'CONDITIONS', 'access_details' =&gt; true]);
+
+/*[
+    0 =&gt; &quot;is_access&quot; =&gt; true
+         &quot;result_by&quot; =&gt; null
+         &quot;levels_checked&quot; =&gt; []
+         &quot;access_id_key&quot; =&gt; &quot;your_access_id_key&quot;
+         &quot;title&quot; =&gt; null
+         &quot;is_public&quot; =&gt; true
+         &quot;is_zone&quot; =&gt; false
+         &quot;uri&quot; =&gt; &quot;your_route_uri&quot;,
+    1 =&gt; array:8[&gt;]
+    2 =&gt; array:8[&gt;]
+    .
+    .
+]*/
+</code></pre>
+<h2 id="page_availableZones">availableZones</h2>
+<p><code>availableZones</code> method return array of allowed / public zones, it take 2 parameters which is <code>$requestForUserId, $options</code> used as per <code>availableRoutes</code> parameters.</p>
+<pre><code class="language-php">YesAuthority::availableZones(false, null, ['check_level' =&gt; 'CONDITIONS', 'access_details' =&gt; true]);
+
+/*[
+    0 =&gt; &quot;is_access&quot; =&gt; true
+         &quot;result_by&quot; =&gt; null
+         &quot;levels_checked&quot; =&gt; []
+         &quot;access_id_key&quot; =&gt; &quot;your_access_id_key&quot;
+         &quot;title&quot; =&gt; null
+         &quot;is_public&quot; =&gt; true
+         &quot;is_zone&quot; =&gt; true // only value change here
+         &quot;uri&quot; =&gt; &quot;your_route_uri&quot;,
+    1 =&gt; array:8[&gt;]
+    2 =&gt; array:8[&gt;]
+    .
+    .
+]*/
+</code></pre>
+<h2 id="page_isPublicAccess">isPublicAccess</h2>
+<p><code>isPublicAccess</code> is used for to check if given route id have public access or not. If it return true then route id have public access otherwise not. Its take 2 parameter which is explain below.</p>
+<ul>
+<li>
+<strong>routeName</strong> - it is not required, if route name is not given then it will take current route id.</li>
+<li>
+<strong>requestForUserId</strong> - it is not required, if this is given then its check route id for given user id.</li>
+</ul>
+<pre><code class="language-php">YesAuthority::isPublicAccess('home', 1);
+
+// true
+</code></pre>
+<h2 id="page_Methods">Methods</h2>
+<p>In this server-side and client-side helpers are included which is used anywhere in the application. This methods are very useful for use <a href="index.html"><code>YesAuthority</code></a>.</p>
+<h2 id="page___-canAccess">__canAccess</h2>
+<p><code>__canAccess</code> is serverside and clientside function for check if given route have access or not.</p>
+<pre><code class="language-php">__canAccess('home');
+
+// true
+</code></pre>
+<h2 id="page___-canPublicAccess">__canPublicAccess</h2>
+<p><code>__canPublicAccess</code> is serverside function for check if given route have public access or not.</p>
+<pre><code class="language-php">__canPublicAccess('public.app');
+
+// true
+</code></pre>
+    </div>
+
+        <nav>
+        <ul class="Pager">
+            <li class=Pager--prev><a href="Config.html">Previous</a></li>                    </ul>
+    </nav>
+    </article>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+    <!-- jQuery -->
+    <script src="themes/daux/js/jquery-1.11.3.min.js"></script>
+
+    <!-- hightlight.js -->
+    <script src="themes/daux/js/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    <!-- JS -->
+    
+    <script src="themes/daux/js/daux.js"></script>
+
+            <!-- Tipue Search -->
+        <script type="text/javascript" src="tipuesearch/tipuesearch.js"></script>
+
+        <script>
+            window.onunload = function(){}; // force $(document).ready to be called on back/forward navigation in firefox
+            $(function() {
+                tipuesearch({
+                    'base_url': ''
+                });
+            });
+        </script>
+    
+</body>
+</html>
