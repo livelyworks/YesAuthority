@@ -1,0 +1,24 @@
+{
+    "name": "YesAuthority",
+    "description": "Laravel Routes Authorization Library",
+    "keywords": [],
+    "license": "NA",
+    "type": "project",
+    "require": {
+        "php": ">=5.6.4",
+        "laravel/framework"     : "5.4.*"
+    },
+    "require-dev": {
+    },
+    "autoload": {
+        "classmap": [
+            "database"
+        ],
+        "files": [
+            "app/Yantrana/Support/php-gettext-1.0.12/gettext.inc"
+        ],
+        "psr-4": {
+            "LivelyWorks\\YesAuthority\\": "src/"
+        }
+    }
+}
