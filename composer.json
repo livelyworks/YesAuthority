@@ -20,7 +20,7 @@
     },
     "extra": {
     "branch-alias": {
-      "*": "master"
+      "dev-master": "master"
     }
   },
   "prefer-stable": true
