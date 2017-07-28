@@ -1,17 +1,17 @@
 {
     "name": "livelyworks/yesauthority",
     "description": "Laravel Routes Authorization Library",
-    "keywords": [],
+    "keywords": ["laravel", "laravel 5", "authentication", "routes authorization", "authorization","cancan","can","authority", "acl","role","permission","ability","allow","deny","security","laravel 5.1", "laravel 5.2","laravel 5.3", "laravel routes authority"],
     "license": "MIT",
       "authors": [
     {
-      "name": "Vinod Raut - Yesteamtech",
-      "email": "vinodraut@gmail.com"
+      "name": "Vinod Raut",
+      "email": "vinod@livelyworks.net"
     }
   ],
     "require": {
-        "php": ">=5.6.4",
-        "laravel/framework"     : "5.4.*"
+        "php": ">=5.4.0",
+        "illuminate/support": "5.0.x|5.1.x|5.2.x|5.3.x|5.4.x"
     },
     "autoload": {
         "psr-4": {
