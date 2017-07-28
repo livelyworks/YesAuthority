@@ -19,9 +19,6 @@
         }
     },
     "extra": {
-    "branch-alias": {
-      "dev-master": "develop-dev"
-    }
   },
   "prefer-stable": true
 }
