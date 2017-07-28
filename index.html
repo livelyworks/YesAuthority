@@ -61,37 +61,44 @@
             <div class="doc_content s-content">
                 <h1 id="page_YesAuthority"><strong>YesAuthority</strong></h1>
 <hr />
-<p>YesAuthority is an authorization system for <code>AnguLara</code> that focuses more on the concept of activities and resources rather than roles, ids. Using different user roles, ids is still completely possible and often needed, but rather than determining functionality based on roles, ids throughout your <code>app</code>, Authority allows you to simply check if a user is allowed to perform an action on a given resource or activity.</p>
-<p>Before we can use YesAuthority, we need to understand how it works. In order to understand how it works, we have to be aware of some concepts.</p>
-<p><strong>Dependencies</strong> - laravel <code>php</code> framework is major dependency of <code>YesAuthority</code>, because its use many of functions and tools of <code>laravel</code> and basically <code>YesAuthority</code> is based on <code>route</code> of <code>laravel</code>. All over working of authority is route name, without using <code>route name</code> you cannot use <code>YesAuthority</code>.</p>
-<p><strong>The library contain some files are:</strong></p>
-<ul>
-<li>
-<p><code>config/yes-authority.php</code></p>
-</li>
-<li>
-<p><code>YesAuthority/YesAuthority.php</code></p>
-</li>
-<li>
-<p><code>YesAuthority/YesAuthorityFacade.php</code></p>
-</li>
-<li>
-<p><code>YesAuthority/YesAuhorityServiceProvider.php</code></p>
-</li>
-<li>
-<p><code>Middleware/AuthorityCheckpostMiddleware.php</code></p>
-</li>
-<li>
-<p>In <code>__yes-authority.php</code> defined ability for user manually
-based on user ids, roles, user-model and role-model etc. There is levels of authority maintained.</p>
-</li>
-<li>
-<p><code>AuthorityCheckpostMiddleware.php</code> is a middleware or you can say that it is a gateway of application. The work of this middleware is if user is unauthorized then redirect that user on specific <code>URL</code>.</p>
-</li>
-</ul>
-<p><code>web.php</code> is a route file of <code>laravel</code>, where all the application level route are defined. You have to add your <code>AuthorityCheckpostMiddleware</code> here.</p>
-<h3 id="page_When-to-use-YesAuthority">When to use YesAuthority</h3>
-<p>As a discussed elsewhere, if your application have multiple user roles and you have to give a role basis permissions then you can use authority. <code>YesAuthority</code> is very flexible, <code>helpers</code>, <code>facade</code>, and <code>blade directive</code> are available for use anywhere in your application. <code>YesAuthority</code> give you power of accessibility of application.</p>
+<p>YesAuthority is flexible authorization system for Laravel, It check the <code>route</code> permission to access a certain portion of the site or application. To add Permissions <code>User-based</code>, <code>Role-based</code>, <code>Virtual Conditions</code>. There is one middleware name as 'authority checkpost' which is use for filter permission of login user, Under this middleware handle every activity permission of user, role etc.</p>
+<h2 id="page_Installation"><strong>Installation</strong></h2>
+<p>Require this package in your <code>composer.json</code> or install it by running:</p>
+<pre><code class="language-bash">    composer require livelyworks/yesauthority
+</code></pre>
+<p>Now update Composer</p>
+<pre><code class="language-bash">     composer update
+</code></pre>
+<p>This will place a copy of the configuration file at <code>config/yes-authority.php</code> and middleware at <code>Middleware/YesAuthorityCheckpostMiddleware.php</code>. The config file includes an 'default' configuration, which is a great place to setup your route permissions, So make this happen need to be run this command.</p>
+<pre><code class="language-bash">    php artisan vendor:publish  --tag=&quot;yesauthority&quot;
+</code></pre>
+<h2 id="page_Configuration-Steps"><strong>Configuration Steps</strong></h2>
+<p>Open <code>Kernel.php</code> file and add this middleware into <code>$routeMiddleware</code> array as:</p>
+<pre><code class="language-php">    protected $routeMiddleware = [
+        
+        // copy this line and add it.
+        'authority.checkpost'  =&gt; LivelyWorks\yesauthority\AuthorityCheckpostMiddleware::class
+
+    ];
+</code></pre>
+<p>After that provide protection to the application routes, You need to use <code>authority.checkpost</code> middleware in routes file.</p>
+<pre><code class="language-php">
+    Route::get('/page', [ 'middleware' =&gt; 'authority.checkpost']);
+
+                    or 
+    
+    Route::group(['middleware' =&gt; 'authority.checkpost'], function () {
+
+        // define those routes here, Which will be accessible after login 
+
+    });
+
+                   or 
+
+    Other ways to use middleware.
+</code></pre>
+<p>If the user tries to access this route without being logged in, They will be redirected to the login page.
+To access a protected route, the user must first login.</p>
             </div>
         </div>
     </div>
