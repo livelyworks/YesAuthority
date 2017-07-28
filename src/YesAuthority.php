@@ -35,6 +35,13 @@ class YesAuthority
     protected $customPermissions = false;
 
     /**
+     * Middleware name
+     *
+     * @var array
+     */
+    protected $middlewareName = "authority.checkpost";    
+
+    /**
      * Authority Configurations
      *
      * @var array
@@ -115,6 +122,8 @@ class YesAuthority
         if(__isEmpty($this->yesConfig) or __isEmpty($this->configColRole) or __isEmpty($this->configColUserId)) {
             throw new Exception("YesAuthority - config item should contain col_role, col_user_id");
         }
+
+        $this->middlewareName = array_get($this->yesConfig, 'middleware_name') ?: $this->middlewareName;
 
         if($requestForUserId and ($this->accessScope === 'user')) {
 
@@ -346,10 +355,26 @@ class YesAuthority
 
         // check if user is logged in
         if (($this->userIdentified === false)) {
-            return [
+
+            if($accessDetailsRequired === true) {
+
+                $result = $this->detailsFormat(false, $accessIdKey);
+                $result->response_code = 511;
+                $result->message = 'Authentication Required';
+
+                if($this->isDirectChecked === true) {
+                    $this->initialize();
+                }
+
+                return $result;
+            }
+
+            return false;
+
+            /*return [
                 'reaction_code' => 9,
                 'message'       => __("Not Authenticated")
-            ];
+            ];*/
         }
 
         // if accessKeyId not set then route name will be used as access id key
@@ -624,7 +649,7 @@ class YesAuthority
             'internal_details' => $this->accessDetailsRequested
             ], $options);
 
-        if(in_array('authority.checkpost', $middleware)) {
+        if(in_array($this->middlewareName, $middleware)) {
             $getResult = $this->check($routeName, $configure, $requestForUserId, $options);
 
             if($options['internal_details'] === true) {
@@ -645,6 +670,20 @@ class YesAuthority
         }
 
         return true;        
+    }
+
+    /**
+     * Get available available routes which consist of available & public routes
+     *
+     * @param bool $isUriRequired - if you required uri along with route names
+     * @param string/int $requestForUserId - User other than logged in
+     * @param array $options - []
+     *
+     * @return array
+     *---------------------------------------------------------------- */
+    public function availableRoutes($isUriRequired = false, $requestForUserId = null, $options = [])
+    {
+        return $this->takeAllowed()->takePublic()->getRoutes($isUriRequired, $requestForUserId, $options);
     }
 
     /**
@@ -674,7 +713,7 @@ class YesAuthority
                 $routeName = $route->getName();
 
                 if($routeName) {
-                    
+
                     $getResult = $this->isRouteAvailable($routeName, $route->middleware(), false, $requestForUserId, $options);
 
                     if($this->accessDetailsRequested === true) {
@@ -736,6 +775,19 @@ class YesAuthority
 
     /**
      * Get all available zones
+     * 
+     * @param  $requestForUserId - user other than logged in 
+     * @param  $options - []  
+     *
+     * @return array
+     *---------------------------------------------------------------- */
+    public function availableZones($requestForUserId = null, $options = [])
+    {
+        return $this->takeAllowed()->takePublic()->getZones($requestForUserId, $options);
+    }
+
+    /**
+     * Get all zones
      * 
      * @param  $requestForUserId - user other than logged in 
      * @param  $options - []  

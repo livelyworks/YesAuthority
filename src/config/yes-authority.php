@@ -2,6 +2,7 @@
 return [
     // authority configurations
     'config' => [
+        'middleware_name'           => 'authority.checkpost',
         'col_user_id'           => '_id',
         'col_role'              => 'user_roles__id',
         'col_user_permissions'  => '__permissions',
