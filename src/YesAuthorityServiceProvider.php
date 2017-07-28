@@ -19,7 +19,7 @@ class YesAuthorityServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__.'/config/yes-authority.php' => config_path('yes-authority.php'),
             __DIR__.'/YesAuthorityCheckpostMiddleware.php' => app_path('Http/Middleware/YesAuthorityCheckpostMiddleware.php'),
-        ]);
+        ], 'yesauthority');
 
         // Add @__can
         Blade::directive('__canAccess', function($expression)
@@ -45,6 +45,9 @@ class YesAuthorityServiceProvider extends ServiceProvider
      */
     public function register()
     {
+        $this->mergeConfigFrom(
+            __DIR__.'/config/yes-authority.php', 'yes-authority'
+        );
 
         // Register 'yesauthority' instance container to our YesAuthority object
         $this->app->singleton('yesauthority', function ($app) {
