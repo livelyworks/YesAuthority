@@ -63,9 +63,10 @@ return [
     /* 
      *  Authority rules
      *
-     *  Rules item needs to have 2 key arrays called allow & deny
+     *  Rules item needs to have 2 arrays with keys allow & deny value of it will be array
+     *  containing access ids as required.
      *  wildcard entries are accepted using *
-     *  for each section deny will be more powerful than allow
+     *  for each section level deny will be more powerful than allow
      *  also key length also matters more is length more
      *--------------------------------------------------------------------------------------------*/    
  	'rules' => [
@@ -77,7 +78,7 @@ return [
             /*  
              *  Rules for the Roles for using id (key will be id)
              *------------------------------------------------------------------------------------*/
-            // @example given for role id of one
+            // @example given for role id of 1
             /*1 => [
                 'allow' => [
                         'view_only_blog_post', // zone id can be used
@@ -93,13 +94,13 @@ return [
         /* 
          *  User based rules
          *  2nd level of defense
-         *  Will override the rules of above roles if matched
+         *  Will override the rules of above 1st level(roles) if matched
          *----------------------------------------------------------------------------------------*/
         'users' => [
             /*  
              *  Rules for the Users for using id (key will be id)
              *------------------------------------------------------------------------------------*/
-            // @example given for role id of one
+            // @example given for role id of 1
             /*1 => [
                 'allow' => [
                         'view_only_blog_post', // zone id can be used
@@ -115,15 +116,34 @@ return [
         /*  
          *  DB Role Based rules
          *  3rd level of defense 
+         *  Will override the rules of above 2nd level(user) if matched
+         *  As it will be database based you don't need to do anything here
          *----------------------------------------------------------------------------------------*/
 
         /*  
          *  DB User Based rules 
          *  4th level of defense 
+         *  Will override the rules of above 3rd level(db roles) if matched
+         *  As it will be database based you don't need to do anything here
          *----------------------------------------------------------------------------------------*/        
 
         /*  Dynamic permissions based on conditions
-         *  5th level of defense         
+         *  Will override the rules of above 4th level(db user) if matched
+         *  5th level of defense     
+         * each condition will be array with following options available:
+         *  @key - string - name
+         *      @value - string - it will be condition identifier (alpha-numeric-dash)  
+         *  @key - string - access_ids
+         *      @value - array - of ids (alpha-numeric-dash)
+         *  @key - string - uses
+         *      @value - string - of of classNamespace@method
+         *          OR
+         *      @value - anonymous function -            
+         *  @note - both the function/method receive following 3 parameters so you can 
+         *          run your own magic of logic using it.
+         *  $accessIdKey            - string - requested id key
+         *  $isAccess               - bool - what is the access received from the above level/condition 
+         *  $currentRouteAccessId   - current route/accessIds being checked.
          *----------------------------------------------------------------------------------------*/
         'conditions' => [
             // Example conditions
@@ -149,7 +169,7 @@ return [
      *
      *  Zones can be created for various reasons, when using dynamic permission system
      *  its bad to store direct access ids into database in that case we can create dynamic access
-     *  zones which is the group of access ids which can be handled with one single key id.
+     *  zones which is the group of access ids & these can be handled with one single key id.
      *----------------------------------------------------------------------------------------*/
     'dynamic_access_zones' => [
         // @example given for role id of one
