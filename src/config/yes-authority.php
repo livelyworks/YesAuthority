@@ -18,13 +18,13 @@ return [
          *   @required
          *   col_user_id - ID column name for users table
         */        
-        'col_user_id'           => '_id',
+        'col_user_id'           => 'id',
 
         /*
          *   @required
          *   col_role - Your Role ID column name for users table
         */        
-        'col_role'              => 'user_roles__id',
+        'col_role'              => 'user_roles_id',
 
         /*
          *   @optional - if you want to use dynamic permissions
@@ -47,7 +47,7 @@ return [
          *   @optional
          *   col_role_id - ID column name for role table
         */
-    //    'col_role_id'           => '_id',        
+    //    'col_role_id'           => 'id',        
 
         /*
          *   @optional
