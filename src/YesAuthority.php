@@ -3,9 +3,9 @@
 namespace LivelyWorks\YesAuthority;
 
 /*
- * YesAuthority - 1.16.21 - 27 JUL 2017
+ * YesAuthority 
  * 
- * Authorization system
+ * Laravel Route Authorization system
  *
  *--------------------------------------------------------------------------- */
 
@@ -543,13 +543,9 @@ class YesAuthority
                 foreach ($conditionItems as $conditionItem) {
                     // get the access ids and condition
                     $conditionAccessIds = array_get($conditionItem, 'access_ids');
-                    $condition          = array_get($conditionItem, 'condition');
-                    $uses               = array_get($conditionItem, 'uses');
+                    $condition          = array_get($conditionItem, 'condition') ?: null;
+                    $uses               = array_get($conditionItem, 'uses') ?: $condition;
                     $name               = array_get($conditionItem, 'name') ?: 'condition_' . $index;
-
-                    if($condition and $uses) {
-                         throw new Exception("Please use any one of condition or uses");
-                    }
 
                     $index++;
 
@@ -567,24 +563,25 @@ class YesAuthority
                             }
                         } 
                         
-                        $isConditionalAccess = null;                      
+                        $isConditionalAccess = $isAccess;     
+
                        // if match found
-                       if(($isMatchFound === true) and $uses) {   
+                       if(($isMatchFound === true) and $uses and is_string($uses)) {   
 
                             $uses = explode('@', $uses);
                             if(count($uses) !== 2) {
-                                throw new Exception("YesAuthority invalid uses class configurations");                            
+                                throw new Exception("YesAuthority invalid condition class configurations");                            
                             }
 
                             if(! class_exists($uses[0]) or ! method_exists($uses[0], $uses[1])) {
-                                throw new Exception("YesAuthority invalid uses class or method configurations");
+                                throw new Exception("YesAuthority invalid condition class or method configurations");
                             }
 
                             $executeCondition = new $uses[0]();
                             $isConditionalAccess = $executeCondition->$uses[1]($accessIdKey, $isAccess, $this->currentRouteAccessId);    
                        
-                        } elseif(($isMatchFound === true) and is_callable($condition)) {                        
-                            $isConditionalAccess = $condition($accessIdKey, $isAccess, $this->currentRouteAccessId);                           
+                        } elseif(($isMatchFound === true) and is_callable($uses)) {                        
+                            $isConditionalAccess = $uses($accessIdKey, $isAccess, $this->currentRouteAccessId);                           
                        } 
 
                         // expect boolean 
@@ -595,13 +592,12 @@ class YesAuthority
                             }
 
                             $this->accessStages[$accessIdKey]['__result'] = 'CONDITIONS';
-                            if(! array_key_exists($name, $this->accessStages[$accessIdKey]['__conditions'])) {
-                                $this->accessStages[$accessIdKey]['__conditions']['__result'] = $name;
-                                $this->accessStages[$accessIdKey]['__conditions'][$name] = $isConditionalAccess;
-                            } else {
-                                $this->accessStages[$accessIdKey]['__conditions']['__result'] = $name.'_'.$index;
-                                $this->accessStages[$accessIdKey]['__conditions'][$name.'_'.$index] = $isConditionalAccess;
-                            }                            
+                            $name = (array_key_exists($name, $this->accessStages[$accessIdKey]['__conditions'])) 
+                                        ? $name.'_'.$index : $name;
+
+                            $this->accessStages[$accessIdKey]['__conditions']['__result'] = $name;
+                            $this->accessStages[$accessIdKey]['__conditions'][$name] = $isConditionalAccess;
+
                             $isAccess = $this->accessStages[$accessIdKey]['CONDITIONS'] = $isConditionalAccess;
                         }
 
@@ -639,13 +635,6 @@ class YesAuthority
             return false;
         }
 
-
-
-     /*  $result = array_merge([
-            'reaction_code' => 11,
-            'message'       => __('Unauthorized.')
-        ], ($accessDetailsRequired === true ? $this->detailsFormat(false, $accessIdKey)->toArray() : []));*/
-
         if($this->isDirectChecked === true) {
             $this->initialize();
         }
@@ -666,7 +655,7 @@ class YesAuthority
         $availableRoutes = $this->availableRoutes();
 
         foreach ($availableRoutes as $route) {
-            if(str_is($accessIdKey, $route) === true) {
+            if(str_is($this->cleanIdKey($accessIdKey), $route) === true) {
                 return true;
             }
         }
@@ -1075,6 +1064,8 @@ class YesAuthority
         }
 
         $result = new YesAuthorityResult([
+            'response_code' => 200,
+            'message' => 'OK',
             'is_access' => $isAccess,
             'result_by' => $resultBy,
             'upper_level' => $parentLevel,
