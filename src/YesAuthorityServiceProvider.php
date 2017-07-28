@@ -21,23 +21,9 @@ class YesAuthorityServiceProvider extends ServiceProvider
             __DIR__.'/YesAuthorityCheckpostMiddleware.php' => app_path('Http/Middleware/YesAuthorityCheckpostMiddleware.php'),
         ], 'yesauthority');
 
-        // Add @__can
-        Blade::directive('__canAccess', function($expression)
-        {
-            return "<?php if(__canAccess($expression) === true): ?>";
-        });
-
-        // Add @__canPublicAccess
-        Blade::directive('__canPublicAccess', function($expression)
-        {
-            return "<?php if(__canPublicAccess($expression) === true): ?>";
-        });
-
-        // Add @__canEnd
-        Blade::directive('__endAccess', function($expression)
-        {
-            return '<?php endif; ?>';
-        });
+        // required YesAuthority helpers & directives
+        require __DIR__.'/support/helpers.php';
+        require __DIR__.'/support/directives.php';
     }
 
     /**
@@ -45,13 +31,8 @@ class YesAuthorityServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        $this->mergeConfigFrom(
-            __DIR__.'/config/yes-authority.php', 'yes-authority'
-        );
-
         // Register 'yesauthority' instance container to our YesAuthority object
         $this->app->singleton('yesauthority', function ($app) {
-
                return new \LivelyWorks\YesAuthority\YesAuthority();
         });
 
