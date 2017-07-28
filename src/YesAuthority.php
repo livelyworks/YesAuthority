@@ -131,6 +131,10 @@ class YesAuthority
                 throw new Exception("YesAuthority - Please set key for user_model in config");
             }
 
+            if(!class_exists($userModelString)) {
+                throw new Exception("YesAuthority - User model does not exist.");
+            }
+
             $userModel = new $userModelString;
             $userFound = $userModel->findOrFail($requestForUserId);
             $this->userIdentified   = $userFound->toArray();
@@ -358,9 +362,10 @@ class YesAuthority
 
             if($accessDetailsRequired === true) {
 
-                $result = $this->detailsFormat(false, $accessIdKey);
-                $result->response_code = 511;
-                $result->message = 'Authentication Required';
+                $result = $this->detailsFormat(false, $accessIdKey, [
+                        'response_code' => 511,
+                        'message' => 'Authentication Required'
+                    ]);
 
                 if($this->isDirectChecked === true) {
                     $this->initialize();
@@ -400,8 +405,6 @@ class YesAuthority
             if($accessDetailsRequired === true) {
 
                 $result = $this->detailsFormat($wildCardResult, $accessIdKey);
-                $result->response_code = 200;
-                $result->message = 'OK';
 
                 return $result;
             }
@@ -627,9 +630,6 @@ class YesAuthority
         }
 
         $result = $this->detailsFormat(false, $accessIdKey);
-
-        $result->response_code = 401;
-        $result->message = 'Unauthorized';
 
         if(! $accessDetailsRequired) {
             return false;
@@ -1038,6 +1038,11 @@ class YesAuthority
             return $isAccess;
         }
 
+        $options = array_merge([
+            'response_code' => $isAccess ? 200 : 401,
+            'message' => $isAccess ? 'OK' : 'Unauthorized',
+        ], $options);
+
         $conditionsIfAny = [];
         $conditionResult = null;
 
@@ -1064,8 +1069,8 @@ class YesAuthority
         }
 
         $result = new YesAuthorityResult([
-            'response_code' => 200,
-            'message' => 'OK',
+            'response_code' => $options['response_code'],
+            'message' => $options['message'],
             'is_access' => $isAccess,
             'result_by' => $resultBy,
             'upper_level' => $parentLevel,

@@ -13,18 +13,17 @@ return [
          *   @required - if you want use name other than 'authority.checkpost'
          *   middleware_name - YesAuthority Middleware name
         */    
-    //    'middleware_name'           => 'authority.checkpost',
-
+        'middleware_name'           => 'authority.checkpost',
         /*
          *   @required
          *   col_user_id - ID column name for users table
-        */
-        'col_user_id'           => 'id',
+        */        
+        'col_user_id'           => '_id',
 
         /*
          *   @required
          *   col_role - Your Role ID column name for users table
-        */
+        */        
         'col_role'              => 'user_roles__id',
 
         /*
@@ -37,20 +36,18 @@ return [
         /*
          *   @required
          *   user_model - User Model
-        */
+        */        
         'user_model'            => 'App\User',
-
         /*
          *   @optional
          *   role_model - Role Model
-        */
-    //    'role_model'            => 'App\Yantrana\Components\User\Models\UserRole',
-
+        */        
+      //  'role_model'            => 'App\UserRoleModel',
         /*
          *   @optional
          *   col_role_id - ID column name for role table
         */
-    //    'col_role_id'           => '_id',
+    //    'col_role_id'           => '_id',        
 
         /*
          *   @optional
@@ -59,7 +56,6 @@ return [
         */
     //    'col_role_permissions'  => '__permissions'
     ],
-
     /* 
      *  Authority rules
      *
@@ -68,51 +64,57 @@ return [
      *  wildcard entries are accepted using *
      *  for each section level deny will be more powerful than allow
      *  also key length also matters more is length more
-     *--------------------------------------------------------------------------------------------*/    
- 	'rules' => [
+     *--------------------------------------------------------------------------------------------*/     
+    'rules' => [
         /*  
          *  Role Based rules
          *  First level of defense 
-         *----------------------------------------------------------------------------------------*/
+         *----------------------------------------------------------------------------------------*/    
         'roles' => [
             /*  
              *  Rules for the Roles for using id (key will be id)
              *------------------------------------------------------------------------------------*/
             // @example given for role id of 1
-            /*1 => [
+           /* 1 => [ // this may be admin user role id
+                'allow' => ['*'],
+                'deny'  => [],
+            ],
+            // Team Member role permissions
+            2 => [ // this may normal user role id
                 'allow' => [
-                        'view_only_blog_post', // zone id can be used
-                        '*' // all the routes/idKeys are allowed
-                    ],
+                    'view_only_blog_post', // zone id can be used
+                    '*' // all the routes/idKeys are allowed
+                ],
                 'deny'  => [
-                        'manage.*', // all the routes/idKeys are allowed except manage.*
-                    ],
-                ]
+                    "manage.*"
+                ],
             ],*/
         ],
-
         /* 
          *  User based rules
          *  2nd level of defense
          *  Will override the rules of above 1st level(roles) if matched
-         *----------------------------------------------------------------------------------------*/
+         *----------------------------------------------------------------------------------------*/                
         'users' => [
-            /*  
+             /*  
              *  Rules for the Users for using id (key will be id)
              *------------------------------------------------------------------------------------*/
-            // @example given for role id of 1
-            /*1 => [
+            // @example given for user id of 1
+            /* 1 => [ // this may be admin user id
+                'allow' => ['*'],
+                'deny'  => [],
+            ],
+            // Team Member permissions
+            2 => [ // this may normal user  id
                 'allow' => [
-                        'view_only_blog_post', // zone id can be used
-                        '*' // all the routes/idKeys are allowed
-                    ],
+                    'view_only_blog_post', // zone id can be used
+                    '*' // all the routes/idKeys are allowed
+                ],
                 'deny'  => [
-                        'manage.*', // all the routes/idKeys are allowed except manage.*
-                    ],
-                ]
+                    "manage.*"
+                ],
             ],*/
         ],
-
         /*  
          *  DB Role Based rules
          *  3rd level of defense 
@@ -170,7 +172,7 @@ return [
      *  Zones can be created for various reasons, when using dynamic permission system
      *  its bad to store direct access ids into database in that case we can create dynamic access
      *  zones which is the group of access ids & these can be handled with one single key id.
-     *----------------------------------------------------------------------------------------*/
+     *----------------------------------------------------------------------------------------*/   
     'dynamic_access_zones' => [
         // @example given for role id of one
         /*'view_only_blog_post' => [
