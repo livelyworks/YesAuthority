@@ -390,6 +390,24 @@ class YesAuthority
 
             return true;
         }
+        /*
+            If contains * then you may like to reverse test 
+        */
+        if(($this->isDirectChecked === true) and (str_contains($accessIdKey, '*'))) {
+
+            $wildCardResult = $this->checkWildCard($accessIdKey, $configure, $requestForUserId, $options);
+
+            if($accessDetailsRequired === true) {
+
+                $result = $this->detailsFormat($wildCardResult, $accessIdKey);
+                $result->response_code = 200;
+                $result->message = 'OK';
+
+                return $result;
+            }
+
+            return $wildCardResult;
+        }
 
         if(!isset($this->accessStages[$accessIdKey])) {
             $this->accessStages[$accessIdKey] = [];
@@ -643,6 +661,27 @@ class YesAuthority
      *
      * @return mixed
      *---------------------------------------------------------------- */
+    protected function checkWildCard($accessIdKey = null, $configure = true, $requestForUserId = null, $options = [])
+    {   
+        $availableRoutes = $this->availableRoutes();
+
+        foreach ($availableRoutes as $route) {
+            if(str_is($accessIdKey, $route) === true) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if route is allowed or not
+     *
+     * @param string $routeName
+     * @param array $middleware     
+     *
+     * @return mixed
+     *---------------------------------------------------------------- */
     protected function isRouteAvailable($routeName, $middleware, $configure = true, $requestForUserId = null, $options = [])
     {   
         $options = array_merge([
@@ -697,12 +736,16 @@ class YesAuthority
      *---------------------------------------------------------------- */
     public function getRoutes($isUriRequired = false, $requestForUserId = null, $options = [])
     {
+        $options = array_merge([
+                'ignore_details' => false,
+                'internal_details' => true
+            ], $options);
+
         // get all application routes.
         $routeCollection = Route::getRoutes();
         $routes = [];
 
         $this->isDirectChecked = false;
-        $options['internal_details'] = true;
 
         $this->configure($requestForUserId, $options);
 
@@ -716,7 +759,7 @@ class YesAuthority
 
                     $getResult = $this->isRouteAvailable($routeName, $route->middleware(), false, $requestForUserId, $options);
 
-                    if($this->accessDetailsRequested === true) {
+                    if(($this->accessDetailsRequested === true) and ($options['internal_details'] === false)) {
 
                         if(($getResult->isAccess() === true) and ($getResult->isPublic() === false) and (array_intersect($this->filterTypes, ['all', 'allowed']))) {
                             
