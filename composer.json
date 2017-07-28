@@ -17,5 +17,11 @@
         "psr-4": {
             "LivelyWorks\\YesAuthority\\": "src/"
         }
+    },
+    "extra": {
+    "branch-alias": {
+      "*": "master"
     }
+  },
+  "prefer-stable": true
 }
