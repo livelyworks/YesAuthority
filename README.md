@@ -52,19 +52,18 @@ Below structure use for to define the abilities of user, More details you can re
         'deny'  => ['*'], // Deny permission to user. Priority is higher than allow.
     ]
 
-    YesAuthority::check('temp1');
-
-    // true   - yes is Allowed
+    canAccess('temp1');
+    // true 
 ```
 
 
 
 ## **Usage - Helpers**
 
-* **<h5>__canAccess($accessId = null);</h5>**
+* **<h5>canAccess($accessId = null);</h5>**
 Check the access, By default it check current route and return response in **boolean** value.
 ```php
-    __canAccess('temp1');
+    canAccess('temp1');
     // true or false
 ```
 
@@ -72,7 +71,7 @@ Check the access, By default it check current route and return response in **boo
 Check the public access, By default it check current route and return response in **boolean** value.
 
 ```php
-    __canPublicAccess();
+    canPublicAccess();
     // true or false
 ```
 
@@ -96,19 +95,19 @@ Check the access of `$accessId`, By default it check current route and return re
 
 ## **Usage - Directives**
 
-* **<h5>@__canAccess($accessId = null);</h5>**
+* **<h5>@canAccess($accessId = null);</h5>**
 Check the access, By default it check current route and return response in **boolean** value.
 ```php
-    @__canAccess()
+    @canAccess()
        // your logic here.
-    @__endAccess;
+    @endAccess;
 ```
 
 
-* **<h5>@__canPublicAccess($accessId = null);</h5>**
+* **<h5>@canPublicAccess($accessId = null);</h5>**
 Check the public access, By default it check current route and return response in **boolean** value.
 ```php
-    @__canPublicAccess()
+    @canPublicAccess()
        // your logic here.
-    @__endAccess;
+    @endAccess;
 ```
