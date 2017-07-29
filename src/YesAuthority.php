@@ -100,7 +100,7 @@ class YesAuthority
     protected function configure($requestForUserId = null, $options = [])
     {
         if(__isEmpty($this->permissions) and is_array($this->permissions) === false) {
-           throw new Exception("YesAuthority - permissions empty");
+           throw new Exception('YesAuthority - permissions empty. Please check your YesAuthority configurations.');
         }
 
         if($requestForUserId) {
@@ -120,7 +120,7 @@ class YesAuthority
         $roleModelString          = array_get($this->yesConfig, 'role_model');
 
         if(__isEmpty($this->yesConfig) or __isEmpty($this->configColRole) or __isEmpty($this->configColUserId)) {
-            throw new Exception("YesAuthority - config item should contain col_role, col_user_id");
+            throw new Exception('YesAuthority - config item should contain col_role, col_user_id');
         }
 
         $this->middlewareName = array_get($this->yesConfig, 'middleware_name') ?: $this->middlewareName;
@@ -128,11 +128,11 @@ class YesAuthority
         if($requestForUserId and ($this->accessScope === 'user')) {
 
             if(! is_string($userModelString)) {
-                throw new Exception("YesAuthority - Please set key for user_model in config");
+                throw new Exception('YesAuthority - Please set key for user_model in config');
             }
 
             if(!class_exists($userModelString)) {
-                throw new Exception("YesAuthority - User model does not exist.");
+                throw new Exception('YesAuthority - User model does not exist.');
             }
 
             $userModel = new $userModelString;
@@ -168,9 +168,9 @@ class YesAuthority
             if($this->accessScope === 'role') {
 
                 if($remaingLevels = array_except($this->checkLevels, $this->roleLevels) and ($this->levelsModified === true)) {
-                    throw new Exception(implode(array_keys($remaingLevels), ', '). " not allowed for role based check");
+                    throw new Exception(implode(array_keys($remaingLevels), ', '). ' not allowed for role based check');
                 } elseif($remaingLevels and ($this->levelsModified === 'upto')) {
-                    throw new Exception("Using YesAuthority::checkUpto() with YesAuthority::viaRole() is not permitted");
+                    throw new Exception('Using YesAuthority::checkUpto() with YesAuthority::viaRole() is not permitted');
                 }
 
                 $this->userRoleId = $requestForUserId;
@@ -272,7 +272,7 @@ class YesAuthority
         $this->levelsModified = true;
 
         if(empty($this->checkLevels)) {
-            throw new Exception("YesAuthority::checkOnly() invalid array parameter");
+            throw new Exception('YesAuthority::checkOnly() invalid array parameter');
         }
 
         return $this;
@@ -293,7 +293,7 @@ class YesAuthority
         }
 
         if(empty(array_only($this->checkLevels, $levels))) {
-            throw new Exception("YesAuthority::checkExcept() invalid array parameter");
+            throw new Exception('YesAuthority::checkExcept() Invalid array parameter');
         }
 
         $this->checkLevels = array_except($this->checkLevels, $levels);
@@ -312,7 +312,13 @@ class YesAuthority
     public function checkUpto($level)
     {
         if(! is_string($level)) {
-            throw new Exception("YesAuthority::checkUpto() argument should be string");            
+            throw new Exception("YesAuthority - $level - argument should be string");            
+        }
+
+        if(! array_key_exists($level, $this->checkLevels)) {
+            throw new Exception("YesAuthority - $level - Invalid key, Only - "
+                    . implode(', ', array_keys($this->checkLevels)). ' are accepted'
+                );
         }
 
         $this->checkLevel = $this->checkLevels[$level];
@@ -395,6 +401,11 @@ class YesAuthority
 
             return true;
         }
+
+        if(! is_string($accessIdKey)) {
+            throw new Exception('YesAuthority - Invalid AccessIdKey parameter for check');            
+        }
+
         /*
             If contains * then you may like to reverse test 
         */
@@ -573,11 +584,11 @@ class YesAuthority
 
                             $uses = explode('@', $uses);
                             if(count($uses) !== 2) {
-                                throw new Exception("YesAuthority invalid condition class configurations");                            
+                                throw new Exception('YesAuthority invalid condition class configurations');                            
                             }
 
                             if(! class_exists($uses[0]) or ! method_exists($uses[0], $uses[1])) {
-                                throw new Exception("YesAuthority invalid condition class or method configurations");
+                                throw new Exception('YesAuthority invalid condition class or method configurations');
                             }
 
                             $executeCondition = new $uses[0]();
@@ -897,14 +908,15 @@ class YesAuthority
      *
      * @return array
      *---------------------------------------------------------------- */
-    public function isPublicAccess($routeName = null, $requestForUserId = null)
+    public function isPublicAccess($routeName = null)
     {
 
         if(!$routeName) {
             $routeName = Route::currentRouteName();
         }
 
-        $this->availableRoutes($requestForUserId);
+        // run get routes & collect public routes
+        $this->takePublic()->getRoutes();
 
         return in_array($routeName, $this->publicRoutes);
     }
