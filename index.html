@@ -66,18 +66,17 @@
 <p>Require this package in your <code>composer.json</code> or install it by running:</p>
 <pre><code class="language-bash">    composer require livelyworks/yesauthority
 </code></pre>
-<p>Now update Composer</p>
-<pre><code class="language-bash">     composer update
+<p>After that add the service provider to <code>config/app.php</code></p>
+<pre><code class="language-bash">    LivelyWorks\YesAuthority\YesAuthorityServiceProvider::class
 </code></pre>
 <p>This will place a copy of the configuration file at <code>config/yes-authority.php</code> and middleware at <code>Middleware/YesAuthorityCheckpostMiddleware.php</code>. The config file includes an 'default' configuration, which is a great place to setup your route permissions, So make this happen need to be run this command.</p>
 <pre><code class="language-bash">    php artisan vendor:publish  --tag=&quot;yesauthority&quot;
 </code></pre>
 <h2 id="page_Configuration-Steps"><strong>Configuration Steps</strong></h2>
-<p>Open <code>Kernel.php</code> file and add this middleware into <code>$routeMiddleware</code> array as:</p>
+<p>Open <code>app/Http/Kernel.php</code> file and add this middleware into <code>$routeMiddleware</code> array as:</p>
 <pre><code class="language-php">    protected $routeMiddleware = [
         
-        // copy this line and add it.
-        'authority.checkpost'  =&gt; LivelyWorks\yesauthority\AuthorityCheckpostMiddleware::class
+        'authority.checkpost'  =&gt; \App\Http\Middleware\YesAuthorityCheckpostMiddleware::class
 
     ];
 </code></pre>
@@ -85,20 +84,27 @@
 <pre><code class="language-php">
     Route::get('/page', [ 'middleware' =&gt; 'authority.checkpost']);
 
-                    or 
-    
-    Route::group(['middleware' =&gt; 'authority.checkpost'], function () {
-
-        // define those routes here, Which will be accessible after login 
-
-    });
-
-                   or 
-
-    Other ways to use middleware.
 </code></pre>
-<p>If the user tries to access this route without being logged in, They will be redirected to the login page.
-To access a protected route, the user must first login.</p>
+<blockquote>
+<p>OR</p>
+</blockquote>
+<p>define all those routes here, Which will be accessible after login.</p>
+<pre><code class="language-php">
+
+Route::group(['middleware' =&gt; 'authority.checkpost'], function () {
+
+});
+
+
+</code></pre>
+<blockquote>
+<p>OR</p>
+</blockquote>
+<pre><code class="language-php">    // Other ways to use middleware.
+</code></pre>
+<p>After that use of <code>authority.checkpost</code> middleware only allowed routes can access the logged in user. If route not allowed and the user tries to access this route, So it will be return response <code>unauthorized</code> user.</p>
+<h2 id="page_Other"><strong>Other</strong></h2>
+<p>Yoooo..!! Done Installation &amp; Configuration now you can use YesAuthority facade in your application with his chaining functions, Please see <a href="https://livelyworks.github.io/YesAuthority" class="external">documentations</a>.</p>
             </div>
         </div>
     </div>
