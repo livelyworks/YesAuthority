@@ -594,12 +594,12 @@ class YesAuthority
                             $executeCondition = new $uses[0]();
                             $isConditionalAccess = $executeCondition->$uses[1]($accessIdKey, $isAccess, $this->currentRouteAccessId);    
                        
-                        } elseif(($isMatchFound === true) and is_callable($uses)) {                        
+                        } elseif(($isMatchFound === true) and $uses and is_callable($uses)) {                        
                             $isConditionalAccess = $uses($accessIdKey, $isAccess, $this->currentRouteAccessId);                           
                        } 
 
                         // expect boolean 
-                        if(is_bool($isConditionalAccess) === true) {   
+                        if(($isMatchFound === true) and $uses and (is_bool($isConditionalAccess) === true)) {   
 
                             if(! isset($this->accessStages[$accessIdKey]['__conditions'])) {
                                 $this->accessStages[$accessIdKey]['__conditions'] = [];
