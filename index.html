@@ -91,17 +91,16 @@
         'deny'  =&gt; ['*'], // Deny permission to user. Priority is higher than allow.
     ]
 
-    YesAuthority::check('temp1');
-
-    // true   - yes is Allowed
+    canAccess('temp1');
+    // true 
 </code></pre>
 <h2 id="page_Usage-Helpers"><strong>Usage - Helpers</strong></h2>
 <ul>
 <li>
-<strong><h5>__canAccess($accessId = null);</h5></strong>
+<strong><h5>canAccess($accessId = null);</h5></strong>
 Check the access, By default it check current route and return response in <strong>boolean</strong> value.</li>
 </ul>
-<pre><code class="language-php">    __canAccess('temp1');
+<pre><code class="language-php">    canAccess('temp1');
     // true or false
 </code></pre>
 <ul>
@@ -109,7 +108,7 @@ Check the access, By default it check current route and return response in <stro
 <strong><h5>__canPublicAccess($accessId = null);</h5></strong>
 Check the public access, By default it check current route and return response in <strong>boolean</strong> value.</li>
 </ul>
-<pre><code class="language-php">    __canPublicAccess();
+<pre><code class="language-php">    canPublicAccess();
     // true or false
 </code></pre>
 <h2 id="page_Usage-Facade"><strong>Usage - Facade</strong></h2>
@@ -132,21 +131,21 @@ Check the access of <code>$accessId</code>, By default it check current route an
 <h2 id="page_Usage-Directives"><strong>Usage - Directives</strong></h2>
 <ul>
 <li>
-<strong><h5>@__canAccess($accessId = null);</h5></strong>
+<strong><h5>@canAccess($accessId = null);</h5></strong>
 Check the access, By default it check current route and return response in <strong>boolean</strong> value.</li>
 </ul>
-<pre><code class="language-php">    @__canAccess()
+<pre><code class="language-php">    @canAccess()
        // your logic here.
-    @__endAccess;
+    @endAccess;
 </code></pre>
 <ul>
 <li>
-<strong><h5>@__canPublicAccess($accessId = null);</h5></strong>
+<strong><h5>@canPublicAccess($accessId = null);</h5></strong>
 Check the public access, By default it check current route and return response in <strong>boolean</strong> value.</li>
 </ul>
-<pre><code class="language-php">    @__canPublicAccess()
+<pre><code class="language-php">    @canPublicAccess()
        // your logic here.
-    @__endAccess;
+    @endAccess;
 </code></pre>
             </div>
         </div>
