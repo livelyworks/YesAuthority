@@ -272,7 +272,8 @@ class YesAuthority
         $this->levelsModified = true;
 
         if(empty($this->checkLevels)) {
-            throw new Exception('YesAuthority::checkOnly() invalid array parameter');
+            throw new Exception('YesAuthority::checkOnly() invalid array parameter'
+                . implode(', ', array_keys($this->checkLevels)). ' are accepted');
         }
 
         return $this;
@@ -293,7 +294,8 @@ class YesAuthority
         }
 
         if(empty(array_only($this->checkLevels, $levels))) {
-            throw new Exception('YesAuthority::checkExcept() Invalid array parameter');
+            throw new Exception('YesAuthority::checkExcept() Invalid array parameter, ' 
+                . implode(', ', array_keys($this->checkLevels)). ' are accepted');
         }
 
         $this->checkLevels = array_except($this->checkLevels, $levels);
@@ -312,11 +314,11 @@ class YesAuthority
     public function checkUpto($level)
     {
         if(! is_string($level)) {
-            throw new Exception("YesAuthority - $level - argument should be string");            
+            throw new Exception("YesAuthority::checkUpto() - $level - argument should be string");            
         }
 
         if(! array_key_exists($level, $this->checkLevels)) {
-            throw new Exception("YesAuthority - $level - Invalid key, Only - "
+            throw new Exception("YesAuthority::checkUpto() - Invalid key $level, Only "
                     . implode(', ', array_keys($this->checkLevels)). ' are accepted'
                 );
         }
@@ -349,7 +351,7 @@ class YesAuthority
      *      
      * @return mixed
      *---------------------------------------------------------------- */
-    public function check($accessIdKey = null, $configure = true, $requestForUserId = null, $options = [])
+    public function check($accessIdKey = null, $configure = true, $requestForUserId = null, array $options = [])
     {  
         $options = array_merge([
             'internal_details' => $this->accessDetailsRequested
@@ -594,12 +596,12 @@ class YesAuthority
                             $executeCondition = new $uses[0]();
                             $isConditionalAccess = $executeCondition->$uses[1]($accessIdKey, $isAccess, $this->currentRouteAccessId);    
                        
-                        } elseif(($isMatchFound === true) and $uses and is_callable($uses)) {                        
+                        } elseif(($isMatchFound === true) and is_callable($uses)) {                        
                             $isConditionalAccess = $uses($accessIdKey, $isAccess, $this->currentRouteAccessId);                           
                        } 
 
                         // expect boolean 
-                        if(($isMatchFound === true) and $uses and (is_bool($isConditionalAccess) === true)) {   
+                        if(is_bool($isConditionalAccess) === true) {   
 
                             if(! isset($this->accessStages[$accessIdKey]['__conditions'])) {
                                 $this->accessStages[$accessIdKey]['__conditions'] = [];
@@ -661,7 +663,7 @@ class YesAuthority
      *
      * @return mixed
      *---------------------------------------------------------------- */
-    protected function checkWildCard($accessIdKey = null, $configure = true, $requestForUserId = null, $options = [])
+    protected function checkWildCard($accessIdKey = null, $configure = true, $requestForUserId = null, array $options = [])
     {   
         $options = array_merge($options, [
                 'ignore_details' => true,
@@ -687,7 +689,7 @@ class YesAuthority
      *
      * @return mixed
      *---------------------------------------------------------------- */
-    protected function isRouteAvailable($routeName, $middleware, $configure = true, $requestForUserId = null, $options = [])
+    protected function isRouteAvailable($routeName, $middleware, $configure = true, $requestForUserId = null, array $options = [])
     {   
         $options = array_merge([
             'internal_details' => $this->accessDetailsRequested
@@ -725,7 +727,7 @@ class YesAuthority
      *
      * @return array
      *---------------------------------------------------------------- */
-    public function availableRoutes($isUriRequired = false, $requestForUserId = null, $options = [])
+    public function availableRoutes($isUriRequired = false, $requestForUserId = null, array $options = [])
     {
         return $this->takeAllowed()->takePublic()->getRoutes($isUriRequired, $requestForUserId, $options);
     }
@@ -739,7 +741,7 @@ class YesAuthority
      *
      * @return array
      *---------------------------------------------------------------- */
-    public function getRoutes($isUriRequired = false, $requestForUserId = null, $options = [])
+    public function getRoutes($isUriRequired = false, $requestForUserId = null, array $options = [])
     {
         $options = array_merge([
                 'ignore_details' => false,
