@@ -1,37 +1,71 @@
-## Welcome to GitHub Pages
+# **YesAuthority**
+-------------------
+YesAuthority is flexible authorization system for Laravel, It check the `route` permission to access a certain portion of the site or application. To add Permissions `User-based`, `Role-based`, `Virtual Conditions`. There is one middleware name as 'authority checkpost' which is use for filter permission of login user, Under this middleware handle every activity permission of user, role etc.  
 
-You can use the [editor on GitHub](https://github.com/livelyworks/YesAuthority/edit/master/README.md) to maintain and preview the content for your website in Markdown files.
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
+## **Installation**
+Require this package in your `composer.json` or install it by running:
 
-### Markdown
-
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
-
-```markdown
-Syntax highlighted code block
-
-# Header 1
-## Header 2
-### Header 3
-
-- Bulleted
-- List
-
-1. Numbered
-2. List
-
-**Bold** and _Italic_ and `Code` text
-
-[Link](url) and ![Image](src)
+```bash
+    composer require livelyworks/yesauthority
 ```
 
-For more details see [GitHub Flavored Markdown](https://guides.github.com/features/mastering-markdown/).
+After that add the service provider to `config/app.php`
 
-### Jekyll Themes
+```bash
+    LivelyWorks\YesAuthority\YesAuthorityServiceProvider::class
+```
 
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/livelyworks/YesAuthority/settings). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
+This will place a copy of the configuration file at `config/yes-authority.php` and middleware at `Middleware/YesAuthorityCheckpostMiddleware.php`. The config file includes an 'default' configuration, which is a great place to setup your route permissions, So make this happen need to be run this command.
 
-### Support or Contact
+```bash
+    php artisan vendor:publish  --tag="yesauthority"
+```
 
-Having trouble with Pages? Check out our [documentation](https://help.github.com/categories/github-pages-basics/) or [contact support](https://github.com/contact) and we’ll help you sort it out.
+## **Configuration Steps**
+
+Open `app/Http/Kernel.php` file and add this middleware into `$routeMiddleware` array as:
+
+```php
+    protected $routeMiddleware = [
+        
+        'authority.checkpost'  => \App\Http\Middleware\YesAuthorityCheckpostMiddleware::class
+
+    ];
+```
+
+After that provide protection to the application routes, You need to use `authority.checkpost` middleware in routes file. 
+
+```php
+
+    Route::get('/page', [ 'middleware' => 'authority.checkpost']);
+
+```
+
+
+> OR
+
+
+define all those routes here, Which will be accessible after login.
+
+```php  
+
+
+Route::group(['middleware' => 'authority.checkpost'], function () {
+
+});
+
+
+```
+
+> OR
+
+```php
+    // Other ways to use middleware.
+```
+
+After that use of `authority.checkpost` middleware only allowed routes can access the logged in user. If route not allowed and the user tries to access this route, So it will be return response `unauthorized` user.
+
+
+##  **Other**
+Yoooo..!! Done Installation & Configuration now you can use YesAuthority facade in your application with his chaining functions, Please see [documentations](https://livelyworks.github.io/YesAuthority).
