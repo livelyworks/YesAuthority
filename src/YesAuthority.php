@@ -99,7 +99,7 @@ class YesAuthority
       *-----------------------------------------------------------------------*/
     protected function configure($requestForUserId = null, $options = [])
     {
-        if(__isEmpty($this->permissions) and is_array($this->permissions) === false) {
+        if(is_empty($this->permissions) and is_array($this->permissions) === false) {
            throw new Exception('YesAuthority - permissions empty. Please check your YesAuthority configurations.');
         }
 
@@ -119,7 +119,7 @@ class YesAuthority
         $userModelString          = array_get($this->yesConfig, 'user_model');
         $roleModelString          = array_get($this->yesConfig, 'role_model');
 
-        if(__isEmpty($this->yesConfig) or __isEmpty($this->configColRole) or __isEmpty($this->configColUserId)) {
+        if(is_empty($this->yesConfig) or is_empty($this->configColRole) or is_empty($this->configColUserId)) {
             throw new Exception('YesAuthority - config item should contain col_role, col_user_id');
         }
 
@@ -153,7 +153,7 @@ class YesAuthority
                 $this->userRoleId     = array_get($this->userIdentified, $this->configColRole);
                 $this->userId         = array_get($this->userIdentified, $this->configColUserId);
 
-                if($this->configColPermissions and __isEmpty(array_get($this->userIdentified, $this->configColPermissions)) === false) {
+                if($this->configColPermissions and is_empty(array_get($this->userIdentified, $this->configColPermissions)) === false) {
                 
                     $rawUserPermissions = array_get($this->userIdentified, $this->configColPermissions);
 
@@ -181,7 +181,7 @@ class YesAuthority
                 $roleFound = $roleModel->findOrFail($this->userRoleId);
                 $this->roleIdentified   = $roleFound->toArray();
 
-                if($this->configColRolePermissions and __isEmpty(array_get($this->roleIdentified, $this->configColRolePermissions)) === false) {
+                if($this->configColRolePermissions and is_empty(array_get($this->roleIdentified, $this->configColRolePermissions)) === false) {
             
                     $rawUserRolePermissions = array_get($this->roleIdentified, $this->configColRolePermissions);
 
@@ -345,23 +345,23 @@ class YesAuthority
      * This method use to check permissions
      *
      * @param string $accessIdKey
-     * @param bool $configure
      * @param int/string $requestForUserId
      * @param array $options []
      *      
      * @return mixed
      *---------------------------------------------------------------- */
-    public function check($accessIdKey = null, $configure = true, $requestForUserId = null, array $options = [])
+    public function check($accessIdKey = null, $requestForUserId = null, array $options = [])
     {  
         $options = array_merge([
-            'internal_details' => $this->accessDetailsRequested
+            'internal_details' => $this->accessDetailsRequested,
+            'configure' => true
             ], $options);
 
         $isAccess   = false;
 
         $accessDetailsRequired = $options['internal_details'];
 
-        if($configure === null or $configure === true) {
+        if($options['configure'] === null or $options['configure'] === true) {
             $this->configure($requestForUserId, $options);
         }
 
@@ -395,7 +395,7 @@ class YesAuthority
             $accessIdKey = $this->currentRouteAccessId;
         }
         
-       if(__isEmpty($this->permissions) and is_array($this->permissions) === false) {
+       if(is_empty($this->permissions) and is_array($this->permissions) === false) {
 
             if($this->isDirectChecked === true) {
                 $this->initialize();
@@ -413,7 +413,7 @@ class YesAuthority
         */
         if(($this->isDirectChecked === true) and (str_contains($accessIdKey, '*'))) {
 
-            $wildCardResult = $this->checkWildCard($accessIdKey, $configure, $requestForUserId, $options);
+            $wildCardResult = $this->checkWildCard($accessIdKey, $requestForUserId, $options);
 
             if($accessDetailsRequired === true) {
 
@@ -487,7 +487,7 @@ class YesAuthority
 
             $dependents = $this->dependentsAccessIds[$accessIdKey];
 
-            if(__isEmpty($dependents) === false) {
+            if(is_empty($dependents) === false) {
 
                 foreach ($dependents as $dependent) {
                     
@@ -554,7 +554,7 @@ class YesAuthority
             $conditionItems = array_get($this->permissions, 'rules.conditions');
             $index = 0;
 
-            if(__isEmpty($conditionItems) === false and is_array($conditionItems)) {
+            if(is_empty($conditionItems) === false and is_array($conditionItems)) {
                 // check for declared conditionItems
                 foreach ($conditionItems as $conditionItem) {
                     // get the access ids and condition
@@ -566,7 +566,7 @@ class YesAuthority
                     $index++;
 
                     // check if it exists
-                    if((__isEmpty($conditionAccessIds) === false)) {
+                    if((is_empty($conditionAccessIds) === false)) {
 
                         $isMatchFound = false;
                          // check of each access id
@@ -663,11 +663,12 @@ class YesAuthority
      *
      * @return mixed
      *---------------------------------------------------------------- */
-    protected function checkWildCard($accessIdKey = null, $configure = true, $requestForUserId = null, array $options = [])
+    protected function checkWildCard($accessIdKey = null, $requestForUserId = null, array $options = [])
     {   
         $options = array_merge($options, [
                 'ignore_details' => true,
-                'internal_details' => true
+                'internal_details' => true,
+                'configure' => true
             ]);
 
         $availableRoutes = $this->availableRoutes(false, $requestForUserId, $options);
@@ -689,14 +690,15 @@ class YesAuthority
      *
      * @return mixed
      *---------------------------------------------------------------- */
-    protected function isRouteAvailable($routeName, $middleware, $configure = true, $requestForUserId = null, array $options = [])
+    protected function isRouteAvailable($routeName, $middleware, $requestForUserId = null, array $options = [])
     {   
         $options = array_merge([
-            'internal_details' => $this->accessDetailsRequested
+            'internal_details' => $this->accessDetailsRequested,
+             'configure' => true
             ], $options);
 
         if(in_array($this->middlewareName, $middleware)) {
-            $getResult = $this->check($routeName, $configure, $requestForUserId, $options);
+            $getResult = $this->check($routeName, $requestForUserId, $options);
 
             if($options['internal_details'] === true) {
                 return $getResult;
@@ -745,7 +747,8 @@ class YesAuthority
     {
         $options = array_merge([
                 'ignore_details' => false,
-                'internal_details' => true
+                'internal_details' => true,
+                'configure' => false
             ], $options);
 
         // get all application routes.
@@ -757,14 +760,14 @@ class YesAuthority
         $this->configure($requestForUserId, $options);
 
         // if routes found
-        if (__isEmpty($routeCollection) === false) {
+        if (is_empty($routeCollection) === false) {
             // If routeName=>uri is required
             foreach ($routeCollection as $route) {
                 $routeName = $route->getName();
 
                 if($routeName) {
 
-                    $getResult = $this->isRouteAvailable($routeName, $route->middleware(), false, $requestForUserId, $options);
+                    $getResult = $this->isRouteAvailable($routeName, $route->middleware(), $requestForUserId, $options);
 
                     if(($this->accessDetailsRequested === true) and ($options['ignore_details'] === false)) {
 
@@ -846,18 +849,22 @@ class YesAuthority
      *---------------------------------------------------------------- */
     public function getZones($requestForUserId = null, $options = [])
     {
+        $options = array_merge([
+            'internal_details' => true,
+            'configure' => false
+        ], $options);
+
         $availableZones = [];
 
         $this->isDirectChecked = false;
-        $options['internal_details'] = true;
 
         $this->configure($requestForUserId, $options);
 
-        if(__isEmpty($this->dynamicAccessZones) === false) {            
+        if(is_empty($this->dynamicAccessZones) === false) {            
 
             foreach ($this->dynamicAccessZones as $accessZone => $accessZoneContents) {                
                 
-                $getResult = $this->check($accessZone, false, $requestForUserId, $options);
+                $getResult = $this->check($accessZone, $requestForUserId, $options);
 
                 if($this->accessDetailsRequested === true) {
 
@@ -947,7 +954,7 @@ class YesAuthority
             $denyList = [];
         }
 
-        if(__isEmpty($this->dynamicAccessZones) === false and (count($accessList) + count($denyList)) > 0) {
+        if(is_empty($this->dynamicAccessZones) === false and (count($accessList) + count($denyList)) > 0) {
 
             $zoneAllowedAccessIds = [];
             $zoneDeniedAccessIds = [];
@@ -970,7 +977,7 @@ class YesAuthority
         }
 
         // perform allowed check
-        if(__isEmpty($accessList) === false and is_array($accessList)) {
+        if(is_empty($accessList) === false and is_array($accessList)) {
             foreach ($accessList as $accessId) {
 
                 // remove unnecessary wild-cards *
@@ -990,7 +997,7 @@ class YesAuthority
         }
 
         //perform deny check
-        if(__isEmpty($denyList) === false and is_array($denyList)) {
+        if(is_empty($denyList) === false and is_array($denyList)) {
             foreach ($denyList as $denyId) {
 
                 // remove unnecessary wild-cards *
@@ -1065,7 +1072,7 @@ class YesAuthority
         $conditionsIfAny = [];
         $conditionResult = null;
 
-        $resultBy = __ifIsset($this->accessStages[$accessIdKey], function() use (&$accessIdKey, &$conditionsIfAny, &$conditionResult) {
+        $resultBy = if_isset($this->accessStages[$accessIdKey], function() use (&$accessIdKey, &$conditionsIfAny, &$conditionResult) {
                         $conditionsIfAny = array_pull($this->accessStages[$accessIdKey], '__conditions');
                 return array_pull($this->accessStages[$accessIdKey], '__result');
             }, null);
@@ -1095,11 +1102,11 @@ class YesAuthority
             'upper_level' => $parentLevel,
             'condition_result_by' => $conditionResult,
             'conditions_checked' => $conditionsIfAny,
-            'levels_checked' => __ifIsset($this->accessStages[$accessIdKey], true, []),
+            'levels_checked' => if_isset($this->accessStages[$accessIdKey], true, []),
             'access_id_key' => $accessIdKey,
-            'title' => __ifIsset($options['title'], true, null),
+            'title' => if_isset($options['title'], true, null),
             'is_public' => isset($options['is_public']) ? $options['is_public'] : false,
-            'is_zone' => __ifIsset($options['is_zone'], true),
+            'is_zone' => if_isset($options['is_zone'], true),
         ], [
            'check_levels' => $this->checkLevels
         ]);
