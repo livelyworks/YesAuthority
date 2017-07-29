@@ -383,11 +383,6 @@ class YesAuthority
             }
 
             return false;
-
-            /*return [
-                'reaction_code' => 9,
-                'message'       => __("Not Authenticated")
-            ];*/
         }
 
         // if accessKeyId not set then route name will be used as access id key

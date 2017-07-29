@@ -3,20 +3,20 @@
      * YesAuthority directives.
      *
      *-------------------------------------------------------- */
-    // Add @__can
-    Blade::directive('__canAccess', function($expression)
+    // Add @can
+    Blade::directive('canAccess', function($expression)
     {
-        return "<?php if(__canAccess($expression) === true): ?>";
+        return "<?php if(canAccess($expression) === true): ?>";
     });
 
-    // Add @__canPublicAccess
-    Blade::directive('__canPublicAccess', function($expression)
+    // Add @canPublicAccess
+    Blade::directive('canPublicAccess', function($expression)
     {
-        return "<?php if(__canPublicAccess($expression) === true): ?>";
+        return "<?php if(canPublicAccess($expression) === true): ?>";
     });
 
-    // Add @__canEnd
-    Blade::directive('__endAccess', function($expression)
+    // Add @canEnd
+    Blade::directive('endAccess', function($expression)
     {
         return '<?php endif; ?>';
     });

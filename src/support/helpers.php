@@ -13,8 +13,8 @@
     * @return bool.
     *-------------------------------------------------------- */
 
-    if (!function_exists('__canAccess')) {
-        function __canAccess($accessId = null)
+    if (!function_exists('canAccess')) {
+        function canAccess($accessId = null)
         {
 
             if(YesAuthority::check($accessId) === true 
@@ -34,8 +34,8 @@
     * 
     * @return bool.
     *-------------------------------------------------------- */
-    if (!function_exists('__canPublicAccess')) {
-        function __canPublicAccess($accessId = null)
+    if (!function_exists('canPublicAccess')) {
+        function canPublicAccess($accessId = null)
         {
             return YesAuthority::isPublicAccess($accessId);
         }
