@@ -652,7 +652,12 @@ class YesAuthority
      *---------------------------------------------------------------- */
     protected function checkWildCard($accessIdKey = null, $configure = true, $requestForUserId = null, $options = [])
     {   
-        $availableRoutes = $this->availableRoutes();
+        $options = array_merge($options, [
+                'ignore_details' => true,
+                'internal_details' => true
+            ]);
+
+        $availableRoutes = $this->availableRoutes(false, $requestForUserId, $options);
 
         foreach ($availableRoutes as $route) {
             if(str_is($this->cleanIdKey($accessIdKey), $route) === true) {
@@ -748,7 +753,7 @@ class YesAuthority
 
                     $getResult = $this->isRouteAvailable($routeName, $route->middleware(), false, $requestForUserId, $options);
 
-                    if(($this->accessDetailsRequested === true) and ($options['internal_details'] === false)) {
+                    if(($this->accessDetailsRequested === true) and ($options['ignore_details'] === false)) {
 
                         if(($getResult->isAccess() === true) and ($getResult->isPublic() === false) and (array_intersect($this->filterTypes, ['all', 'allowed']))) {
                             
