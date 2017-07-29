@@ -22,50 +22,93 @@ This will place a copy of the configuration file at `config/yes-authority.php` a
     php artisan vendor:publish  --tag="yesauthority"
 ```
 
-## **Configuration Steps**
-
-Open `app/Http/Kernel.php` file and add this middleware into `$routeMiddleware` array as:
+Now, Open `app/Http/Kernel.php` file and add this middleware into `$routeMiddleware` array as:
 
 ```php
     protected $routeMiddleware = [
-        
         'authority.checkpost'  => \App\Http\Middleware\YesAuthorityCheckpostMiddleware::class
-
     ];
 ```
 
 After that provide protection to the application routes, You need to use `authority.checkpost` middleware in routes file. 
 
-```php
-
-    Route::get('/page', [ 'middleware' => 'authority.checkpost']);
-
-```
-
-
-> OR
-
-
-define all those routes here, Which will be accessible after login.
 
 ```php  
-
-
-Route::group(['middleware' => 'authority.checkpost'], function () {
-
-});
-
-
+    Route::group(['middleware' => 'authority.checkpost'], function () {
+        // define all those routes here, Which will be accessible after login.
+    });
 ```
 
-> OR
+Congratulations, done installation.
+
+##  **Configuration**
+
+Below structure use for to define the abilities of user, More details you can read the [documentations](https://livelyworks.github.io/YesAuthority/Sample_Structure)` to add authorization rules.
 
 ```php
-    // Other ways to use middleware.
+
+    [
+        'allow' => ['temp1'], // Allowed permission to user. Priority is less than deny.
+        'deny'  => ['*'], // Deny permission to user. Priority is higher than allow.
+    ]
+
+    YesAuthority::check('temp1');
+
+    // true   - yes is Allowed
 ```
 
-After that use of `authority.checkpost` middleware only allowed routes can access the logged in user. If route not allowed and the user tries to access this route, So it will be return response `unauthorized` user.
 
 
-##  **Other**
-Yoooo..!! Done Installation & Configuration now you can use YesAuthority facade in your application with his chaining functions, Please see [documentations](https://livelyworks.github.io/YesAuthority).
+## **Usage - Helpers**
+
+* **<h5>__canAccess($accessId = null);</h5>**
+Check the access, By default it check current route and return response in **boolean** value.
+```php
+    __canAccess('temp1');
+    // true or false
+```
+
+* **<h5>__canPublicAccess($accessId = null);</h5>**
+Check the public access, By default it check current route and return response in **boolean** value.
+
+```php
+    __canPublicAccess();
+    // true or false
+```
+
+## **Usage - Facade**
+
+* **<h5>YesAuthority::check($accessId = null, $requestForUserId = null)</h5>**
+Check the access of `$accessId`, By default it check current route and return response in **boolean** value, And it can check access of perticular user by passing user id `($requestForUserId)` parameter.
+```php
+    YesAuthority::check('temp1');
+    // true or false
+```
+
+
+* **<h5>YesAuthority::isPublicAccess($accessId = null)</h5>**
+Check the access of `$accessId`, By default it check current route and return response in **boolean** value.
+```php
+    YesAuthority::isPublicAccess('temp1');
+    // true or false
+```
+
+
+## **Usage - Directives**
+
+* **<h5>@__canAccess($accessId = null);</h5>**
+Check the access, By default it check current route and return response in **boolean** value.
+```php
+    @__canAccess()
+       // your logic here.
+    @__endAccess;
+```
+
+
+* **<h5>@__canPublicAccess($accessId = null);</h5>**
+Check the public access, By default it check current route and return response in **boolean** value.
+```php
+    @__canPublicAccess()
+       // your logic here.
+    @__endAccess;
+```
