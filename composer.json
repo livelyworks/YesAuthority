@@ -22,7 +22,7 @@
         "email": "contact@livelyworks.net",
         "docs": "https://livelyworks.github.io/YesAuthority/",
         "source": "https://github.com/livelyworks/YesAuthority"
-    }
+    },
     "require": {
         "php": ">=5.4.0",
         "laravel/framework": "5.1.x|5.2.x|5.3.x|5.4.x||5.5.x",
