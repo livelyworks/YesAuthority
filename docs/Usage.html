@@ -61,15 +61,15 @@
     <div class="Page__header">
         <h1><a href="Usage.html">Usage</a></h1>
                 <span style="float: left; font-size: 10px; color: gray;">
-            Wednesday, July 26, 2017 4:29 PM        </span>
+            Monday, July 31, 2017 1:25 PM        </span>
                     </div>
 
 
     <div class="s-content">
         <p>Now your all the accessibility is set and now you can use <a href="index.html"><code>YesAuthority</code></a> in your project for show, hide buttons or any element in html or get a <code>role</code> or <code>user</code> level permissions or create dynamic access permissions. To do all these things <a href="index.html"><code>YesAuthority</code></a> provide you a facade, helpers for instant access.</p>
 <h2 id="page_Facade">Facade</h2>
-<p>Before started you have to add use <a href="index.html"><code>YesAuthority</code></a> on the top of the your application and then use facade method. Following some facade method are available in <a href="index.html"><code>YesAuthority</code></a>.</p>
-<p>before use facade please go through following array of level.</p>
+<p>Before started If you added the alias to <code>config/app.php</code> then you can access <a href="index.html"><code>YesAuthority</code></a> from any Controller, anywhere else in your laravel application. Following some facade method are available in <a href="index.html"><code>YesAuthority</code></a>.</p>
+<p>before use facade method please go through following permission levels.</p>
 <pre><code class="language-php">/*[
     'CONFIG_ROLE'   =&gt; 1, // Config Role
     'CONFIG_USER'   =&gt; 2, // Config User
@@ -79,53 +79,102 @@
 ]*/
 </code></pre>
 <h2 id="page_availableRoutes">availableRoutes</h2>
-<p><code>availableRoutes</code> method return array of allowed / public routes, it take 3 parameters which is explain below.</p>
+<p><code>availableRoutes</code> method used to return array of allowed and public routes and its require two argument.</p>
 <ul>
 <li>
-<strong>isUriRequired</strong> - default this parameter is <code>false</code>, if you required uri along with route names then pass a first parameter as <code>true</code>.</li>
+<strong>isUriRequired</strong> - default this argument set to <code>false</code>, if you required uri along with route names then pass a first argument as <code>true</code>.</li>
 <li>
 <strong>requestForUserId</strong> - default is logged in user id, if you pass other than logged in user id then it will return array of that user allow / public route.</li>
-<li>
-<strong>options</strong> - default is null, if you want to get a array of route from specific level then pass the first <code>check_level</code> key to this array and it will return array of allowed / public routes, if you pass <code>access_details =&gt; true</code> as second key then it will return array along with full detail of that route ids.</li>
 </ul>
-<pre><code class="language-php">YesAuthority::availableRoutes(false, null, ['check_level' =&gt; 'CONDITIONS', 'access_details' =&gt; true]);
+<pre><code class="language-php">YesAuthority::availableRoutes(false, null);
+</code></pre>
+<h2 id="page_getRoutes">getRoutes</h2>
+<p>This method returns array of all routes. You may also pass arguments as per <code>availableRoutes</code>.</p>
+<pre><code class="language-php">YesAuthority::getRoutes(false, null);
+</code></pre>
+<p>If you wish to return only allowed, denied or public route then add chaining method to <code>getRoutes</code>.</p>
+<pre><code class="language-php">// For Allowed
+YesAuthority::takeAllowed()-&gt;getRoutes();
 
-/*[
-    0 =&gt; &quot;is_access&quot; =&gt; true
-         &quot;result_by&quot; =&gt; null
-         &quot;levels_checked&quot; =&gt; []
-         &quot;access_id_key&quot; =&gt; &quot;your_access_id_key&quot;
-         &quot;title&quot; =&gt; null
-         &quot;is_public&quot; =&gt; true
-         &quot;is_zone&quot; =&gt; false
-         &quot;uri&quot; =&gt; &quot;your_route_uri&quot;,
-    1 =&gt; array:8[&gt;]
-    2 =&gt; array:8[&gt;]
-    .
-    .
-]*/
+// For Denied
+YesAuthority::takeDenied()-&gt;getRoutes();
+
+// For Public
+YesAuthority::takePublic()-&gt;getRoutes(); 
+</code></pre>
+<p>If you wish to get routes according to levels.</p>
+<pre><code class="language-php">// Get some levels, you can use array also for multiple levels
+YesAuthority::checkOnly('CONFIG_ROLE')-&gt;getRoutes();
+
+// Get Except, you can use array also for multiple levels
+YesAuthority::checkExcept('CONFIG_ROLE')-&gt;getRoutes();
+
+// Get up to levels, you can use array also for multiple levels
+YesAuthority::checkUpto('CONFIG_ROLE')-&gt;getRoutes();
+</code></pre>
+<p>If you wish to get routes according to role_id then use <code>viaRole</code></p>
+<pre><code class="language-php">YesAuthority::checkOnly(['CONFIG_ROLE', 'DB_ROLE'])-&gt;viaRole()-&gt;getRoutes(false, roleId);
 </code></pre>
 <h2 id="page_availableZones">availableZones</h2>
-<p><code>availableZones</code> method return array of allowed / public zones, it take 2 parameters which is <code>$requestForUserId, $options</code> used as per <code>availableRoutes</code> parameters.</p>
-<pre><code class="language-php">YesAuthority::availableZones(false, null, ['check_level' =&gt; 'CONDITIONS', 'access_details' =&gt; true]);
+<p><code>availableZones</code> method used to return array of allowed and public zones. You can also pass <code>userId</code> as argument for get zones of particular user other than logged in user.</p>
+<pre><code class="language-php">YesAuthority::availableZones(false, null);
+</code></pre>
+<h2 id="page_getZones">getZones</h2>
+<p>This method returns array of all zones. You may also pass arguments as per <code>availableRoutes</code>.</p>
+<pre><code class="language-php">YesAuthority::getZones(false, null);
+</code></pre>
+<p>If you wish to return only allowed, denied or public route then add chaining method to <code>getZones</code>.</p>
+<pre><code class="language-php">// For Allowed
+YesAuthority::takeAllowed()-&gt;getZones();
 
-/*[
-    0 =&gt; &quot;is_access&quot; =&gt; true
-         &quot;result_by&quot; =&gt; null
-         &quot;levels_checked&quot; =&gt; []
-         &quot;access_id_key&quot; =&gt; &quot;your_access_id_key&quot;
-         &quot;title&quot; =&gt; null
-         &quot;is_public&quot; =&gt; true
-         &quot;is_zone&quot; =&gt; true // only value change here
-         &quot;uri&quot; =&gt; &quot;your_route_uri&quot;,
-    1 =&gt; array:8[&gt;]
-    2 =&gt; array:8[&gt;]
+// For Denied
+YesAuthority::takeDenied()-&gt;getZones();
+
+// For Public
+YesAuthority::takePublic()-&gt;getZones(); 
+</code></pre>
+<p>If you wish to get zones according to levels.</p>
+<pre><code class="language-php">// Get some levels, you can use array also for multiple levels
+YesAuthority::checkOnly('CONFIG_ROLE')-&gt;getZones();
+
+// Get Except, you can use array also for multiple levels
+YesAuthority::checkExcept('CONFIG_ROLE')-&gt;getZones();
+
+// Get up to levels, you can use array also for multiple levels
+YesAuthority::checkUpto('CONFIG_ROLE')-&gt;getZones();
+</code></pre>
+<p>If you wish to get zones according to role_id then use <code>viaRole</code></p>
+<pre><code class="language-php">YesAuthority::checkOnly([your_level_here])-&gt;viaRole()-&gt;getZones(false, roleId);
+</code></pre>
+<p>Its all output is in collection objects as following</p>
+<pre><code class="language-php">/*[
+    0 =&gt; YesAuthorityResult {#208 ▼
+    #originalResult: array:12 [▼
+      &quot;response_code&quot; =&gt; 200
+      &quot;message&quot; =&gt; &quot;OK&quot;
+      &quot;is_access&quot; =&gt; true
+      &quot;result_by&quot; =&gt; &quot;CONFIG_USER&quot;
+      &quot;upper_level&quot; =&gt; &quot;CONFIG_ROLE&quot;
+      &quot;condition_result_by&quot; =&gt; null
+      &quot;conditions_checked&quot; =&gt; null
+      &quot;levels_checked&quot; =&gt; array:2 [▶]
+      &quot;access_id_key&quot; =&gt; &quot;demo.1&quot;
+      &quot;title&quot; =&gt; null
+      &quot;is_public&quot; =&gt; false
+      &quot;is_zone&quot; =&gt; false
+    ]
+    #options: array:1 [▶]
+    #checkLevels: array:5 [▶]
+    +&quot;uri&quot;: &quot;demo-1&quot;
+    }
+    1 =&gt; YesAuthorityResult {#198 ▶}
+    2 =&gt; YesAuthorityResult {#209 ▶}
     .
     .
 ]*/
 </code></pre>
 <h2 id="page_isPublicAccess">isPublicAccess</h2>
-<p><code>isPublicAccess</code> is used for to check if given route id have public access or not. If it return true then route id have public access otherwise not. Its take 2 parameter which is explain below.</p>
+<p><code>isPublicAccess</code> is used for to check if given route id have public access or not. If it is have public access then return true otherwise return false. Its require two argument which is explain below.</p>
 <ul>
 <li>
 <strong>routeName</strong> - it is not required, if route name is not given then it will take current route id.</li>
@@ -137,16 +186,21 @@
 // true
 </code></pre>
 <h2 id="page_Methods">Methods</h2>
-<p>In this server-side and client-side helpers are included which is used anywhere in the application. This methods are very useful for use <a href="index.html"><code>YesAuthority</code></a>.</p>
-<h2 id="page___-canAccess">__canAccess</h2>
-<p><code>__canAccess</code> is serverside and clientside function for check if given route have access or not.</p>
-<pre><code class="language-php">__canAccess('home');
+<p>There are 2 basic functions that you need to be aware of to utilize <a href="index.html"><code>YesAuthority</code></a>.</p>
+<h2 id="page_canAccess">canAccess</h2>
+<p>Check if user can access a resource</p>
+<pre><code class="language-php">canAccess('home');
 
 // true
 </code></pre>
-<h2 id="page___-canPublicAccess">__canPublicAccess</h2>
-<p><code>__canPublicAccess</code> is serverside function for check if given route have public access or not.</p>
-<pre><code class="language-php">__canPublicAccess('public.app');
+<p>You can also use wild card string to check access a resource.</p>
+<pre><code class="language-php">canAccess('manage.*');
+
+// true
+</code></pre>
+<h2 id="page_canPublicAccess">canPublicAccess</h2>
+<p>Check if if given route have public access.</p>
+<pre><code class="language-php">canPublicAccess('public.app');
 
 // true
 </code></pre>
