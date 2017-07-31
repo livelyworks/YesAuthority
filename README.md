@@ -67,7 +67,7 @@ Check the access, By default it check current route and return response in **boo
     // true or false
 ```
 
-* **<h5>__canPublicAccess($accessId = null);</h5>**
+* **<h5>canPublicAccess($accessId = null);</h5>**
 Check the public access, By default it check current route and return response in **boolean** value.
 
 ```php

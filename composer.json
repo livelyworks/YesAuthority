@@ -1,18 +1,32 @@
 {
     "name": "livelyworks/yesauthority",
-    "description": "Laravel Routes Authorization Library",
+    "description": "YesAuthority - Laravel Routes Authorization Library",
     "keywords": ["laravel", "laravel 5", "authentication", "routes authorization", "authorization","cancan","can","authority", "acl","role","permission","ability","allow","deny","security","laravel 5.1", "laravel 5.2","laravel 5.3", "laravel 5.4", "laravel 5.5", "laravel routes authority"],
     "license": "MIT",
-      "authors": [
-    {
-      "name": "Vinod Raut",
-      "email": "vinod@livelyworks.net"
+    "authors": [
+        {
+          "name": "Vinod Raut",
+          "email": "vinod@livelyworks.net"
+        },
+        {
+            "name": "Ravindra Lande"
+        },
+        {
+            "name": "Nikhil Bangre"
+        },
+        {
+            "name": "Ajay Pimpalkar"
+        },
+    ],
+    "support": {
+        "email": "contact@livelyworks.net",
+        "docs": "https://livelyworks.github.io/YesAuthority/",
+        "source": "https://github.com/livelyworks/YesAuthority"
     }
-  ],
     "require": {
         "php": ">=5.4.0",
         "laravel/framework": "5.1.x|5.2.x|5.3.x|5.4.x||5.5.x",
-        "livelyworks/laraware": ">=1.0.1"
+        "livelyworks/laraware": ">=1.0.4"
     },
     "autoload": {
         "psr-4": {
@@ -21,7 +35,7 @@
     },
    "extra": {
         "branch-alias": {
-            "dev-master": "1.x-dev"
+            "dev-master": "2.x-dev"
         }
     },
   "minimum-stability": "dev",
