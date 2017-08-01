@@ -371,8 +371,8 @@ class YesAuthority
             if($accessDetailsRequired === true) {
 
                 $result = $this->detailsFormat(false, $accessIdKey, [
-                        'response_code' => 511,
-                        'message' => 'Authentication Required'
+                        'response_code' => 403,
+                        'message' => 'Forbidden - Authentication Required'
                     ]);
 
                 if($this->isDirectChecked === true) {
