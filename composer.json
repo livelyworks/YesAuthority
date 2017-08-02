@@ -1,5 +1,5 @@
 {
-    "name": "livelyworks/yesauthority",
+    "name": "livelyworks/laravel-yes-authority",
     "description": "YesAuthority - Laravel Routes Authorization Library",
     "keywords": ["laravel", "laravel 5", "authentication", "routes authorization", "authorization","cancan","can","authority", "acl","role","permission","ability","allow","deny","security","laravel 5.1", "laravel 5.2","laravel 5.3", "laravel 5.4", "laravel 5.5", "laravel routes authority"],
     "license": "MIT",
