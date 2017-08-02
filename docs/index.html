@@ -66,7 +66,7 @@
 <p>Require this package in your <code>composer.json</code> or install it by running:</p>
 <pre><code class="language-bash">    composer require livelyworks/laravel-yes-authority
 </code></pre>
-<p>After that add the service provider to <code>config/app.php</code></p>
+<p>Now copy this line and add into provider to the <code>config/app.php</code></p>
 <pre><code class="language-bash">    LivelyWorks\YesAuthority\YesAuthorityServiceProvider::class
 </code></pre>
 <p>This will place a copy of the configuration file at <code>config/yes-authority.php</code> and middleware at <code>Middleware/YesAuthorityCheckpostMiddleware.php</code>. The config file includes an 'default' configuration, which is a great place to setup your route permissions, So make this happen need to be run this command.</p>
