@@ -7,7 +7,7 @@ YesAuthority is flexible authorization system for Laravel, It check the `route` 
 Require this package in your `composer.json` or install it by running:
 
 ```bash
-    composer require livelyworks/yesauthority
+    composer require livelyworks/laravel-yes-authority
 ```
 
 After that add the service provider to `config/app.php`
