@@ -10,12 +10,10 @@ Require this package in your `composer.json` or install it by running:
     composer require livelyworks/laravel-yes-authority
 ```
 
-Now, insert into your `config/app.php`.
+Now, insert this line into your `config/app.php` under the `provider` array.
 
 ```bash
-    "provider" => [
-        LivelyWorks\YesAuthority\YesAuthorityServiceProvider::class
-    ];
+    LivelyWorks\YesAuthority\YesAuthorityServiceProvider::class
 ```
 
 Now, run this command after that `config/yes-authority.php` and `app/Http/Middleware/YesAuthorityCheckpostMiddleware.php` files are publish. 
@@ -24,12 +22,10 @@ Now, run this command after that `config/yes-authority.php` and `app/Http/Middle
     php artisan vendor:publish  --tag="yesauthority"
 ```
 
-Now, insert into your `app/Http/Kernel.php`.
+Now, insert this line into your `app/Http/Kernel.php` under the `$routeMiddleware` array.
 
 ```php
-    protected $routeMiddleware = [
-        'authority.checkpost'  => \App\Http\Middleware\YesAuthorityCheckpostMiddleware::class
-    ];
+    'authority.checkpost'  => \App\Http\Middleware\YesAuthorityCheckpostMiddleware::class
 ```
 Use `authority.checkpost` middleware for handle permission base routes.
 
