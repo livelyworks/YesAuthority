@@ -61,78 +61,210 @@
     <div class="Page__header">
         <h1><a href="Sample_Structure.html">Sample Structure</a></h1>
                 <span style="float: left; font-size: 10px; color: gray;">
-            Thursday, July 27, 2017 1:04 PM        </span>
+  Friday, August 4, 2017 9:13 PM        </span>
                     </div>
 
 
     <div class="s-content">
         <h1 id="page_Sample-Structure-of-__-yes-authority-php-file"><strong>Sample Structure of __yes-authority.php file</strong></h1>
 <hr />
-<pre><code class="language-php">&lt;? php 
-    return [
-       // authority configurations
-        'config' =&gt; [ // 1st Level of Permission
-            'col_user_id'           =&gt; '_id', // User primary key column (required)
-            'col_role'              =&gt; 'role', // Role column of user (required)
-            'col_user_permissions'  =&gt; 'permissions_json', // Permission Column of User
-            'user_model'            =&gt; 'Path to your User model', 
-            'role_model'            =&gt; 'Path to your Role model'
-        ],
-        'rules' =&gt; [
-            'roles' =&gt; [ // 3rd Level of Permission
-                1 =&gt; [ // This array contains the permissions which user role is 1.
-                    'allow' =&gt; ['*'], // Allowed permission to user role is 1. Priority is less than deny.
-                    'deny'  =&gt; [], // Deny permission to user role is 1. Priority is higher than allow.
-                ],
-                2 =&gt; [ // This array contains the permissions which user role is 2.
-                     'allow' =&gt; ['*'],
-                    'deny'  =&gt; ['manage. *'],
-                ]
+<pre><code class="language-php">/* 
+ *  YesAuthority Configurations
+ *
+ *  This configuration file is part of YesAuthority
+ *
+ *------------------------------------------------------------------------------------------------*/
+return [
+
+    /* authority configurations
+     *--------------------------------------------------------------------------------------------*/
+    'config' =&gt; [
+        /*
+         *   @required - if you want use name other than 'authority.checkpost'
+         *   middleware_name - YesAuthority Middleware name
+         *-------------------------------------------------------------------------*/    
+        'middleware_name'           =&gt; 'authority.checkpost',
+
+        /*
+         *   @required
+         *   col_user_id - ID column name for users table
+         *-------------------------------------------------------*/        
+        'col_user_id'           =&gt; 'id',
+
+        /*
+         *   @required
+         *   col_role - Your Role ID column name for users table
+         *-----------------------------------------------------------*/        
+        'col_role'              =&gt; 'user_roles_id',
+
+        /*
+         *   @optional - if you want to use dynamic permissions
+         *   col_user_permissions - Dynamic Permissions(json) column on users table 
+         *   This column should contain json encoded array containing 'allow' &amp; 'deny' arrays
+         *------------------------------------------------------------------------------------*/
+        'col_user_permissions'  =&gt; '__permissions',
+
+        /*
+         *   @required
+         *   user_model - User Model
+         *---------------------------------------------------*/        
+        'user_model'            =&gt; 'App\User',
+
+        /*
+         *   @optional
+         *   role_model - Role Model
+         *---------------------------------------------------*/        
+        'role_model'            =&gt; 'App\UserRoleModel',
+
+        /*
+         *   @optional
+         *   col_role_id - ID column name for role table
+         *---------------------------------------------------*/
+        'col_role_id'           =&gt; 'id',      
+
+        /*
+         *   @optional
+         *   col_role_permissions - Dynamic Permissions(json) column on role table, 
+         *   This column should contain json encoded array containing 'allow' &amp; 'deny' arrays
+         *----------------------------------------------------------------------------------*/
+        'col_role_permissions'  =&gt; '__permissions'
+    ],
+
+    /* 
+     *  Authority rules
+     *
+     *  Rules item needs to have 2 arrays with keys allow &amp; deny value of it will be array
+     *  containing access ids as required.
+     *  wildcard entries are accepted using *
+     *  for each section level deny will be more powerful than allow
+     *  also key length also matters more is length more
+     *--------------------------------------------------------------------------------------------*/     
+    'rules' =&gt; [
+        /*  
+         *  Role Based rules
+         *  First level of defense 
+         *----------------------------------------------------------------------------------------*/    
+        'roles' =&gt; [
+            /*  
+             *  Rules for the Roles for using id (key will be id)
+             *------------------------------------------------------------------------------------*/
+            // @example given for role id of 1
+            1 =&gt; [ // this may be admin user role id
+                'allow' =&gt; ['*'],
+                'deny'  =&gt; [],
             ],
-            'users' =&gt; [ // 2nd Level of Permissions.
-                1 =&gt; [ // id of user 1 permissions
-                    'allow' =&gt; [], // Allowed permission to id of user 1. Priority is less than deny.
-                    'deny'  =&gt; [], // Deny permission to id of 1. Priority is higher then allow.
+            // Team Member role permissions
+            2 =&gt; [ // this may normal user role id
+                'allow' =&gt; [
+                    'view_only_blog_post', // zone id can be used
+                    '*' // all the routes/idKeys are allowed
                 ],
-                2 =&gt; [ // id of user 2 permissions.
-                    'allow' =&gt; [],
-                    'deny'  =&gt; [],
-                ]
+                'deny'  =&gt; [
+                    &quot;manage.*&quot;
+                ],
             ],
-            // dynamic permissions based on conditions
-            'conditions' =&gt; [ // 5th level of Permission
-                [
-                    'access_ids' =&gt; ['access_key'], // Add your access key here.
-                    'condition'  =&gt; function( // Callback function
-                                        $accessId, // Which access id you want to allow, add here. 
-                                        $isAccess, // According to levels current access condition. (in boolean).
-                                        $currentRouteAccessId // current route id ($accessId is check with this id, if passes then follow the condition)
-                                    ) {
-                        // Your logic here
-                    }
-                ]
-            ]
-        ],
-        // dependent access id relationships
-        'dependents' =&gt; [ // dependents route add here for permission
-            'foo_bar.list' =&gt; [ depend on below access.
-                'foo_bar.add, // dependency of 'foo_bar.list' access.
-                'foo_bar.edit'
-            ]
         ],
 
-        // Dynamic access zones
-        'dynamic_access_zones' =&gt; [
-            'zone_name' =&gt; [ // Add your zone name here
-                'title'         =&gt; 'title or heading of zone',
-                'access_ids'    =&gt; [ // Add multiple access ids here
-                    'access_id_name' (if required use asteric(*))
+        /* 
+         *  User based rules
+         *  2nd level of defense
+         *  Will override the rules of above 1st level(roles) if matched
+         *----------------------------------------------------------------------------------------*/                
+        'users' =&gt; [
+             /*  
+             *  Rules for the Users for using id (key will be id)
+             *------------------------------------------------------------------------------------*/
+            // @example given for user id of 1
+            1 =&gt; [ // this may be admin user id
+                'allow' =&gt; ['*'],
+                'deny'  =&gt; [],
+            ],
+            // Team Member permissions
+            2 =&gt; [ // this may normal user  id
+                'allow' =&gt; [
+                    'view_only_blog_post', // zone id can be used
+                    '*' // all the routes/idKeys are allowed
                 ],
-                'dependencies' =&gt; [ // dependencies of zone
-                    'dependent_access_id_name' (if required use asteric(*))
+                'deny'  =&gt; [
+                    &quot;manage.*&quot;
                 ],
             ],
         ],
+
+        /*  
+         *  DB Role Based rules
+         *  3rd level of defense 
+         *  Will override the rules of above 2nd level(user) if matched
+         *  As it will be database based you don't need to do anything here
+         *----------------------------------------------------------------------------------------*/
+
+
+        /*  
+         *  DB User Based rules 
+         *  4th level of defense 
+         *  Will override the rules of above 3rd level(db roles) if matched
+         *  As it will be database based you don't need to do anything here
+         *----------------------------------------------------------------------------------------*/   
+
+
+        /*  Dynamic permissions based on conditions
+         *  Will override the rules of above 4th level(db user) if matched
+         *  5th level of defense     
+         * each condition will be array with following options available:
+         *
+         *  @key - string - name
+         *  @value - string - it will be condition identifier (alpha-numeric-dash)  
+         *
+         *  @key - string - access_ids
+         *  @value - array - of ids (alpha-numeric-dash)
+         *
+         *  @key - string - uses
+         *  @value - string - of of classNamespace@method
+         *          OR
+         *  @value - anonymous function -            
+         *  @note - both the function/method receive following 3 parameters so you can 
+         *          run your own magic of logic using it.
+         *  $accessIdKey            - string - requested id key
+         *  $isAccess               - bool - what is the access received from the above level/condition 
+         *  $currentRouteAccessId   - current route/accessIds being checked.
+         *
+         *----------------------------------------------------------------------------------------*/
+
+        'conditions' =&gt; [
+            // Example conditions
+            //  It should return boolean values, true for access allow &amp; false for deny
+            [
+                'name' =&gt; 'xyz',
+                'access_ids' =&gt; ['demo_authority','delete_blog_post','*'],
+                'uses' =&gt; 'App\Yantrana\XyzCondition@abc'
+            ],
+            [
+                'name' =&gt; 'xyz2',
+                'access_ids' =&gt; ['demo_authority','delete_blog_post','*'],
+                'uses' =&gt; function ()
+                {
+                    return true;
+                }
+            ]
+        ]
+    ],
+    
+    /* 
+     *  Dynamic access zones
+     *
+     *  Zones can be created for various reasons, when using dynamic permission system
+     *  its bad to store direct access ids into database in that case we can create dynamic access
+     *  zones which is the group of access ids &amp; these can be handled with one single key id.
+     *----------------------------------------------------------------------------------------*/   
+    'dynamic_access_zones' =&gt; [
+        // @example given for role id of one
+        'view_only_blog_post' =&gt; [
+            'title' =&gt; 'View Only Blog Post',
+            'access_ids' =&gt; [
+                'manage.blog.read.*'
+            ]
+        ],*/
+    ]
 ];
 </code></pre>
     </div>
