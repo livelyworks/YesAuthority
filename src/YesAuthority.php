@@ -866,22 +866,25 @@ class YesAuthority
                         if(($getResult->isAccess() === true) and ($getResult->isPublic() === false) and (array_intersect($this->filterTypes, ['all', 'allowed']))) {
                             
                             $availableZones[] = $this->detailsFormat($getResult, $accessZone, [
-                                'title' => $accessZoneContents['title'],
-                                'is_zone' => true,
+                                'title' => array_get($accessZoneContents, 'title'),
+                                'is_zone' => true,                                
+                                'dependencies' => array_get($accessZoneContents, 'dependencies'),
                             ]);
 
                         } elseif(($getResult->isAccess() === true) and ($getResult->isPublic() === true) and (array_intersect($this->filterTypes, ['all', 'public']))) {
                             
                             $availableZones[] = $this->detailsFormat($getResult, $accessZone, [
-                                'title' => $accessZoneContents['title'],
+                                'title' => array_get($accessZoneContents, 'title'),
                                 'is_zone' => true,
+                                'dependencies' => array_get($accessZoneContents, 'dependencies'),
                             ]);
 
                         } elseif(($getResult->isAccess() === false) and (array_intersect($this->filterTypes, ['all', 'denied']))) {
                             
                             $availableZones[] = $this->detailsFormat($getResult, $accessZone, [
-                                'title' => $accessZoneContents['title'],
+                                'title' => array_get($accessZoneContents, 'title'),
                                 'is_zone' => true,
+                                'dependencies' => array_get($accessZoneContents, 'dependencies'),
                             ]);
                         } 
 
@@ -1014,7 +1017,8 @@ class YesAuthority
         if(is_array($this->dynamicAccessZones) and array_key_exists($accessIdKey, $this->dynamicAccessZones)) {
             $this->accessStages[$accessIdKey]['__data'] = [
                 'is_zone' => true,
-                'title' => $this->dynamicAccessZones[$accessIdKey]['title']
+                'title' => array_get($this->dynamicAccessZones[$accessIdKey], 'title'),
+                'dependencies' => array_get($this->dynamicAccessZones[$accessIdKey], 'dependencies'),
             ];
         }
         
@@ -1102,15 +1106,14 @@ class YesAuthority
             'title' => ifIsset($options['title'], true, null),
             'is_public' => isset($options['is_public']) ? $options['is_public'] : false,
             'is_zone' => ifIsset($options['is_zone'], true),
+            'dependencies' => ifIsset($options['dependencies'], true, null),
         ], [
            'check_levels' => $this->checkLevels
         ]);
 
-
         unset($options, $accessIdKey, $isAccess, $this->accessStages, $resultBy, $parentLevel, $conditionsIfAny, $conditionResult);
 
-        return $result;
-        
+        return $result;        
     }
 
     /**
