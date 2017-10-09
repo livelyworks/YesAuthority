@@ -147,7 +147,18 @@ class YesAuthority
 
             if($this->accessScope !== 'role') {
                 if(! $requestForUserId) {
-                   $this->userIdentified  = Auth::user()->toArray();
+                    // consider custom user model even if user is logged in for permissions
+                    if(is_string($userModelString)) {
+                        if(!class_exists($userModelString)) {
+                            throw new Exception('YesAuthority - User model does not exist.');
+                        }
+                        $userModel = new $userModelString;
+                        $userFound = $userModel->where($this->configColUserId, Auth::id())->first();
+                        $this->userIdentified   = $userFound->toArray();     
+                    } else {
+                        $this->userIdentified  = Auth::user()->toArray();
+                    }
+
                 }
 
                 $this->userRoleId     = array_get($this->userIdentified, $this->configColRole);
