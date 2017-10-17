@@ -136,7 +136,12 @@ class YesAuthority
             }
 
             $userModel = new $userModelString;
-            $userFound = $userModel->findOrFail($requestForUserId);
+            //$userFound = $userModel->findOrFail($requestForUserId);
+            if(is_array($requestForUserId)) {
+                $userFound = $userModel->where($requestForUserId)->first();
+            } else {
+                $userFound = $userModel->where($this->configColUserId, $requestForUserId)->first();
+            }
             $this->userIdentified   = $userFound->toArray();
         }
 
@@ -153,8 +158,14 @@ class YesAuthority
                             throw new Exception('YesAuthority - User model does not exist.');
                         }
                         $userModel = new $userModelString;
-                        $userFound = $userModel->where($this->configColUserId, Auth::id())->first();
-                        $this->userIdentified   = $userFound->toArray();     
+                        // $userFound = $userModel->where($this->configColUserId, Auth::id())->first();
+                        if(is_array($requestForUserId)) {
+                            $userFound = $userModel->where($requestForUserId)->first();
+                        } else {
+                            $userFound = $userModel->where($this->configColUserId, Auth::id())->first();
+                        }
+
+                        $this->userIdentified   = $userFound->toArray();
                     } else {
                         $this->userIdentified  = Auth::user()->toArray();
                     }
