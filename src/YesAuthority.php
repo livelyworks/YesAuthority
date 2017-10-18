@@ -76,7 +76,6 @@ class YesAuthority
         3 => 'DB_ROLE'
     ];    
 
-    protected $checkEntity = null;
     protected $configEntity = null;
     protected $entityPermissions = [];
 
@@ -1181,7 +1180,6 @@ class YesAuthority
         $this->isDirectChecked = true;
         $this->levelsModified = false;
         $this->filterTypes = ['all'];
-        $this->checkEntity = null;
         $this->configEntity = null;
     }
 
