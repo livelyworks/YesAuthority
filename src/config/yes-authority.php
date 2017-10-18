@@ -181,5 +181,13 @@ return [
                 'manage.blog.read.*'
             ]
         ],*/
+    ],
+    'entities' => [
+        /*'project' => [
+            'model' => 'App\Yantrana\Components\User\Models\UserAuthorityModel',
+            'id_column' => '_id',
+            'permission_column' => '__permissions',
+            'user_id_column' => 'users__id'
+        ]*/
     ]
 ];
