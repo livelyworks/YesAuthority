@@ -40,3 +40,25 @@
             return YesAuthority::isPublicAccess($accessId);
         }
     }
+
+    /*
+    * Check for entity access
+    *
+    * @param string $accessId
+    * 
+    * @return bool.
+    *-------------------------------------------------------- */
+
+    if (!function_exists('canAccessEntity')) {
+        function canAccessEntity($entityKey, $entityId, $accessId = null)
+        {
+            // check for entity permissions  
+            if(YesAuthority::checkEntity($entityKey, $entityId)->check($accessId) === true 
+                or YesAuthority::isPublicAccess($accessId)) {
+
+                return true;
+            }
+
+            return false;
+        }
+    }
