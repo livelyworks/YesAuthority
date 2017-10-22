@@ -1187,7 +1187,7 @@ class YesAuthority
      * Check custom entities permission
      *
      * @param string $entityKey
-     * @param int/string $entityId
+     * @param int/string/array $entityId
      * @param int/string $requestForUserId          
      *
      * @return this
@@ -1225,18 +1225,22 @@ class YesAuthority
         if(!class_exists($entityModelString)) {
             throw new Exception('YesAuthority - Entity model does not exist.');
         }
+        // check if entity available as array
+        if(is_array($entityId)) {
+            $entityIdentified   = $entityId;
+        } else {
+            $entityModel = new $entityModelString;
+            $entityFound = $entityModel->where([
+                $entityIdColumn => $entityId,
+                $userIdColumn => $requestForUserId ? $requestForUserId : Auth::id(),
+            ])->first();
 
-        $entityModel = new $entityModelString;
-        $entityFound = $entityModel->where([
-            $entityIdColumn => $entityId,
-            $userIdColumn => $requestForUserId ? $requestForUserId : Auth::id(),
-        ])->first();
-
-        if(isEmpty($entityFound)) {
-            return $this;
+            if(isEmpty($entityFound)) {
+                return $this;
+            }
+            // if entity model found
+            $entityIdentified   = $entityFound->toArray();
         }
-        // if entity model found
-        $entityIdentified   = $entityFound->toArray();
         // get the permissions out of it
         $rawEntityPermissions = array_get($entityIdentified, $permissionColumn);
         // if permissions found
