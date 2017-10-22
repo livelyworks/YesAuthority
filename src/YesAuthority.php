@@ -1225,14 +1225,23 @@ class YesAuthority
         if(!class_exists($entityModelString)) {
             throw new Exception('YesAuthority - Entity model does not exist.');
         }
+
+        $userToBeFind = $requestForUserId ? $requestForUserId : Auth::id();
+
         // check if entity available as array
         if(is_array($entityId)) {
             $entityIdentified   = $entityId;
+            $extractEntityUserId = array_get($entityIdentified, $userIdColumn);
+
+            if($extractEntityUserId !== $userToBeFind) {
+                return $this;
+            }
+
         } else {
             $entityModel = new $entityModelString;
             $entityFound = $entityModel->where([
                 $entityIdColumn => $entityId,
-                $userIdColumn => $requestForUserId ? $requestForUserId : Auth::id(),
+                $userIdColumn => $userToBeFind,
             ])->first();
 
             if(isEmpty($entityFound)) {
