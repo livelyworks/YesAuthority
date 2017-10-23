@@ -1212,10 +1212,10 @@ class YesAuthority
         $userIdColumn       = array_get($this->configEntity, 'user_id_column');
 
         if(!$entityModelString 
-            or !$entityIdColumn 
+           // or !$entityIdColumn 
             or !$permissionColumn 
             or !$userIdColumn) {
-            throw new Exception('YesAuthority - entity config should contain model, id_column, permission_column and user_id_column');
+            throw new Exception('YesAuthority - entity config should contain model, permission_column and user_id_column');
         }
 
         if(! is_string($entityModelString)) {
@@ -1225,23 +1225,15 @@ class YesAuthority
         if(!class_exists($entityModelString)) {
             throw new Exception('YesAuthority - Entity model does not exist.');
         }
-
-        $userToBeFind = $requestForUserId ? $requestForUserId : Auth::id();
-
         // check if entity available as array
         if(is_array($entityId)) {
             $entityIdentified   = $entityId;
-            $extractEntityUserId = array_get($entityIdentified, $userIdColumn);
-
-            if($extractEntityUserId !== $userToBeFind) {
-                return $this;
-            }
-
         } else {
             $entityModel = new $entityModelString;
+            $entityIdColumn = $entityIdColumn ? $entityIdColumn : $entityModel->getKeyName();
             $entityFound = $entityModel->where([
                 $entityIdColumn => $entityId,
-                $userIdColumn => $userToBeFind,
+                $userIdColumn => $requestForUserId ? $requestForUserId : Auth::id(),
             ])->first();
 
             if(isEmpty($entityFound)) {
