@@ -413,6 +413,10 @@ class YesAuthority
         if(!$accessIdKey) {
             $accessIdKey = $this->currentRouteAccessId;
         }
+        // accessIdKey should be there
+        if(!$accessIdKey) {
+            throw new Exception('YesAuthority - AccessIdKey/RouteName is missing');            
+        }
         
        if(isEmpty($this->permissions) and is_array($this->permissions) === false) {
 
