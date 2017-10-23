@@ -78,6 +78,8 @@ class YesAuthority
 
     protected $configEntity = null;
     protected $entityPermissions = [];
+    protected $entityIdentified = [];
+    protected $userRequestForEntity = null;
 
     /**
       * Constructor
@@ -104,6 +106,14 @@ class YesAuthority
     {
         if(isEmpty($this->permissions) and is_array($this->permissions) === false) {
            throw new Exception('YesAuthority - permissions empty. Please check your YesAuthority configurations.');
+        }
+
+        if($this->configEntity and !empty($this->configEntity) and $requestForUserId) {
+            throw new Exception('YesAuthority - use requestForUserId via checkEntity method.');
+        }
+
+        if($this->userRequestForEntity) {
+            $requestForUserId = $this->userRequestForEntity;
         }
 
         if($requestForUserId) {
@@ -584,10 +594,26 @@ class YesAuthority
                         ]
                     );
                 }
+
+                $entityCondition = array_get($this->configEntity, 'condition');
+                if($this->performLevelChecks(6) and $entityCondition and is_callable($entityCondition)) {
+                    $entityConditionIsAccess = $entityCondition(
+                        $accessIdKey, 
+                        $isAccess, 
+                        $this->currentRouteAccessId, 
+                        $this->entityIdentified,
+                        $this->userIdentified
+                    );
+
+                    if((is_bool($entityConditionIsAccess) === true)) {
+                        $this->accessStages[$accessIdKey]['__result'] = 'ENTITY_CONDITION';
+                        $isAccess = $this->accessStages[$accessIdKey]['ENTITY_CONDITION'] = $entityConditionIsAccess;
+                    }
+                }
             }
         }
 
-        if($this->performLevelChecks(6)) {
+        if($this->performLevelChecks(7)) {
             // dynamic conditions if any 
             $conditionItems = array_get($this->permissions, 'rules.conditions');
             $index = 0;
@@ -1175,7 +1201,8 @@ class YesAuthority
             'DB_ROLE'       => 3, // DB Role
             'DB_USER'       => 4, // DB User
             'DB_ENTITY'     => 5,
-            'CONDITIONS'    => 6, // Conditions            
+            'ENTITY_CONDITION' => 6,
+            'CONDITIONS'    => 7, // Conditions            
         ];
 
         $this->customPermissions = false;
@@ -1185,6 +1212,7 @@ class YesAuthority
         $this->levelsModified = false;
         $this->filterTypes = ['all'];
         $this->configEntity = null;
+        $this->entityIdentified = [];
     }
 
     /**
@@ -1205,6 +1233,7 @@ class YesAuthority
         }
 
         $this->configEntity = array_get($entities, $entityKey);
+        $this->userRequestForEntity = $requestForUserId ? $requestForUserId : Auth::id();
 
         if(! $this->configEntity or isEmpty($this->configEntity)) {
             throw new Exception('YesAuthority - '. $entityKey .' entity not found. Please check your YesAuthority entities.');
@@ -1231,23 +1260,23 @@ class YesAuthority
         }
         // check if entity available as array
         if(is_array($entityId)) {
-            $entityIdentified   = $entityId;
+            $this->entityIdentified   = $entityId;
         } else {
             $entityModel = new $entityModelString;
             $entityIdColumn = $entityIdColumn ? $entityIdColumn : $entityModel->getKeyName();
             $entityFound = $entityModel->where([
                 $entityIdColumn => $entityId,
-                $userIdColumn => $requestForUserId ? $requestForUserId : Auth::id(),
+                $userIdColumn => $this->userRequestForEntity,
             ])->first();
 
             if(isEmpty($entityFound)) {
                 return $this;
             }
             // if entity model found
-            $entityIdentified   = $entityFound->toArray();
+            $this->entityIdentified   = $entityFound->toArray();
         }
         // get the permissions out of it
-        $rawEntityPermissions = array_get($entityIdentified, $permissionColumn);
+        $rawEntityPermissions = array_get($this->entityIdentified, $permissionColumn);
         // if permissions found
         if(isEmpty($rawEntityPermissions) === false) { 
             // if not an array, make it
