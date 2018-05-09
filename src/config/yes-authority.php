@@ -179,7 +179,11 @@ return [
             'title' => 'View Only Blog Post',
             'access_ids' => [
                 'manage.blog.read.*'
-            ]
+            ],
+            'dependencies' => [
+                'view_only_blog_comments'
+            ],
+            'parent' => 'blog'
         ],*/
     ],
     'entities' => [

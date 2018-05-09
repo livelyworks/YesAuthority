@@ -80,6 +80,7 @@ class YesAuthority
     protected $entityPermissions = [];
     protected $entityIdentified = [];
     protected $userRequestForEntity = null;
+    protected $pseudoAccessIds = [];    
 
     /**
       * Constructor
@@ -95,7 +96,6 @@ class YesAuthority
         // get permission info from config
         $this->permissions    = config('yes-authority');
     }
-
     /**
       * configure
       *
@@ -123,7 +123,17 @@ class YesAuthority
         }
 
         $this->currentRouteAccessId = Route::currentRouteName();
-
+        // check of roles has permissions by extending another role
+        $rules = array_get($this->permissions, 'rules.roles', []);
+        if(!empty($rules)) {
+            // loop for each role rule
+            foreach ($rules as $ruleKey => $ruleValue) {
+                // extend permissions by roles
+                $this->extendRolePermissions($ruleKey);
+            }
+            // unset unnecessary
+            unset($rules);
+        }
         $this->yesConfig          = array_get($this->permissions, 'config');
         $this->configColRole      = array_get($this->yesConfig, 'col_role');
         $this->configColUserId    = array_get($this->yesConfig, 'col_user_id');
@@ -131,6 +141,7 @@ class YesAuthority
         $this->dependentsAccessIds      = array_get($this->permissions, 'dependents');
         $userModelString          = array_get($this->yesConfig, 'user_model');
         $roleModelString          = array_get($this->yesConfig, 'role_model');
+        $this->pseudoAccessIds     = array_get($this->yesConfig, 'pseudo_access_ids', []);
 
         if(isEmpty($this->yesConfig) or isEmpty($this->configColRole) or isEmpty($this->configColUserId)) {
             throw new Exception('YesAuthority - config item should contain col_role, col_user_id');
@@ -785,6 +796,33 @@ class YesAuthority
     }
 
     /**
+     * Merge the allowed pseudo routes/accessIds 
+     *
+     * @param array $routes - routes array
+     * @param string/int $requestForUserId - User other than logged in
+     * @param array $options - []
+     *     
+     * @return array
+     *---------------------------------------------------------------- */
+    protected function mergePseudoAllowedAccessIds($routes, $requestForUserId = null, array $options = [])
+    {
+        $options = array_merge([
+            'ignore_details' => false,
+            'internal_details' => false,
+            'configure' => false
+        ], $options);
+
+        $allowedPseudoAccessIds = [];
+        foreach ($this->pseudoAccessIds as $pseudoAccessId) {
+            if($this->check($pseudoAccessId, $requestForUserId, $options) === true) {
+                $allowedPseudoAccessIds[] = $pseudoAccessId;
+            }
+        }
+
+       return array_merge($allowedPseudoAccessIds, $routes);
+    }
+
+    /**
      * Get available available routes which consist of available & public routes
      *
      * @param bool $isUriRequired - if you required uri along with route names
@@ -795,7 +833,9 @@ class YesAuthority
      *---------------------------------------------------------------- */
     public function availableRoutes($isUriRequired = false, $requestForUserId = null, array $options = [])
     {
-        return $this->takeAllowed()->takePublic()->getRoutes($isUriRequired, $requestForUserId, $options);
+        $routes =  $this->takeAllowed()->takePublic()->getRoutes($isUriRequired, $requestForUserId, $options);
+
+        return $this->mergePseudoAllowedAccessIds($routes, $requestForUserId, $options);
     }
 
     /**
@@ -938,6 +978,7 @@ class YesAuthority
                                 'title' => array_get($accessZoneContents, 'title'),
                                 'is_zone' => true,                                
                                 'dependencies' => array_get($accessZoneContents, 'dependencies'),
+                                'parent' => array_get($accessZoneContents, 'parent'),
                             ]);
 
                         } elseif(($getResult->isAccess() === true) and ($getResult->isPublic() === true) and (array_intersect($this->filterTypes, ['all', 'public']))) {
@@ -946,6 +987,7 @@ class YesAuthority
                                 'title' => array_get($accessZoneContents, 'title'),
                                 'is_zone' => true,
                                 'dependencies' => array_get($accessZoneContents, 'dependencies'),
+                                'parent' => array_get($accessZoneContents, 'parent'),
                             ]);
 
                         } elseif(($getResult->isAccess() === false) and (array_intersect($this->filterTypes, ['all', 'denied']))) {
@@ -954,6 +996,7 @@ class YesAuthority
                                 'title' => array_get($accessZoneContents, 'title'),
                                 'is_zone' => true,
                                 'dependencies' => array_get($accessZoneContents, 'dependencies'),
+                                'parent' => array_get($accessZoneContents, 'parent'),
                             ]);
                         } 
 
@@ -1088,6 +1131,7 @@ class YesAuthority
                 'is_zone' => true,
                 'title' => array_get($this->dynamicAccessZones[$accessIdKey], 'title'),
                 'dependencies' => array_get($this->dynamicAccessZones[$accessIdKey], 'dependencies'),
+                'parent' => array_get($this->dynamicAccessZones[$accessIdKey], 'parent'),
             ];
         }
         
@@ -1176,6 +1220,7 @@ class YesAuthority
             'is_public' => isset($options['is_public']) ? $options['is_public'] : false,
             'is_zone' => ifIsset($options['is_zone'], true),
             'dependencies' => ifIsset($options['dependencies'], true, null),
+            'parent' => ifIsset($options['parent'], true, null),
         ], [
            'check_levels' => $this->checkLevels
         ]);
@@ -1312,4 +1357,95 @@ class YesAuthority
     protected function performLevelChecks($level = 99) {
         return ($this->checkLevel >= $level) and in_array($level, $this->checkLevels);
     }
+
+    /**
+      * Extend the permissions from one role to another
+      *
+      * @param int/string $requestedRoleId      
+      * @param int/string $ruleKey        
+      *
+      * @return void
+      *-----------------------------------------------------------------------*/
+    protected function extendRolePermissions($requestedRoleId, $ruleKey = null)
+    {   
+        // avoid recursive loop
+        if($requestedRoleId == $ruleKey) {
+            throw new Exception($ruleKey." - invalid extended role id");
+        }
+        // get available roles info
+        $availalbleRoleItems = array_get($this->permissions, 'rules.roles');
+        // Get original role item for which permissions are extending
+        $originalRoleItem = array_get($availalbleRoleItems, $requestedRoleId);
+        // if its not internal query then it may original
+        if(!$ruleKey) {
+            $ruleKey = $requestedRoleId;
+            $ruleValue = &$originalRoleItem;
+        } else {
+            // get the information for internal request item
+            $ruleValue = array_get($availalbleRoleItems, $ruleKey);
+        }
+        // check if it is extended by other role
+        if(array_has($ruleValue, 'extends') and !empty($ruleValue['extends'])) {
+            // if found handle each permissions.
+            foreach ($ruleValue['extends'] as $extendedBy) {
+                try {
+                    // access by variable
+                    list($roleId, $permissionType) = explode('.', $extendedBy);
+                    // avoid recursive loop
+                    if($ruleKey == $roleId) {
+                        throw new Exception('invalid:same');
+                    }
+                } catch (Exception $e) {
+                    throw new Exception(
+                        $e->getMessage() == 'invalid:same' ?
+                            $roleId." - invalid extended role id"
+                                : $extendedBy." - is invalid extended permissions, it should be like 1.allow"
+                    );
+                }              
+                // check if valid attribute for permissions
+               if(!in_array($permissionType, [ 'allow','deny'])) {
+                    throw new Exception($extendedBy." - only allow & deny are accepted for permissions (Spell check again). eg. 1.allow");
+               }
+               // existing permission
+                $extendedPermissionContainer = array_get($originalRoleItem, $permissionType, []);
+                // extended role permission item
+                $extendRoleItem = array_get($availalbleRoleItems, $roleId, null);
+                // if requested role is not found
+                if(!$extendRoleItem) {
+                    throw new Exception($roleId." - requested role is not available");
+                }
+                // grab main sudo ids
+                $requestedItemPseudoAccessIds = array_intersect(
+                    array_get($originalRoleItem, $permissionType, []),
+                    $this->pseudoAccessIds
+                );
+                // merge permissions & filter the container for unique access ids
+                $extendedPermissionContainer = array_unique(array_merge_recursive(
+                    $extendedPermissionContainer,
+                    array_get($extendRoleItem, $permissionType, [])
+                ));
+                // remove the pseudo access ids
+                $extendedPermissionContainer = array_diff(
+                    $extendedPermissionContainer, 
+                    array_diff($this->pseudoAccessIds, $requestedItemPseudoAccessIds)
+                );
+                // set the refined permitted access ids on to the container
+                array_set($this->permissions, 
+                    'rules.roles.'.$requestedRoleId.'.'.$permissionType, 
+                    $extendedPermissionContainer
+                );
+                // check if the internal extends is there
+                if(array_has($extendRoleItem, 'extends') and !empty($extendRoleItem['extends'])) {
+                    // if so repeat the flow
+                    $this->extendRolePermissions($requestedRoleId, $roleId);
+                }
+                // remove unnecessary items
+                unset($extendedPermissionContainer, $extendRoleItem, $roleId, $permissionType);
+            }
+        }
+        // remove unnecessary items
+        unset($availalbleRoleItems, $originalRoleItem, $ruleKey, $ruleValue, $requestedRoleId);
+        // all done
+        return true;
+    }        
 }
