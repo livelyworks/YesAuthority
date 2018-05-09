@@ -10,6 +10,14 @@ return [
      *--------------------------------------------------------------------------------------------*/
     'config' => [
         /*
+         *   @optional - define here your pseudo access ids
+         *   psudo_access_ids
+        */         
+        'pseudo_access_ids'       => [
+            // 'admin',
+            // 'customer'
+        ],          
+        /*
          *   @required - if you want use name other than 'authority.checkpost'
          *   middleware_name - YesAuthority Middleware name
         */    
