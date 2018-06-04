@@ -61,9 +61,11 @@
     if (!function_exists('canAccessEntity')) {
         function canAccessEntity($entityKey, $entityId, $accessId = null)
         {
-
             if(is_array($accessId)) {
-                throw new Exception('YesAuthority - accessId can not be array for checkEntity');
+                return array_merge(
+                    YesAuthority::checkEntity($entityKey, $entityId)->check($accessId),
+                    YesAuthority::isPublicAccess($accessId)
+                );
             }
 
             // check for entity permissions  
