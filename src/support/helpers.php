@@ -16,14 +16,23 @@
     if (!function_exists('canAccess')) {
         function canAccess($accessId = null)
         {
-
-            if(YesAuthority::check($accessId) === true 
-                or YesAuthority::isPublicAccess($accessId)) {
-
-                return true;
+            if(is_array($accessId)) {
+                return array_merge(
+                    YesAuthority::check($accessId),
+                    YesAuthority::isPublicAccess($accessId)
+                );
             }
 
-            return false;
+            if(YesAuthority::check($accessId) === false) {
+
+                if(YesAuthority::isPublicAccess($accessId)) {
+                    return true;
+                }
+
+                return false;
+            }
+
+            return true;
         }
     }
 
@@ -52,6 +61,11 @@
     if (!function_exists('canAccessEntity')) {
         function canAccessEntity($entityKey, $entityId, $accessId = null)
         {
+
+            if(is_array($accessId)) {
+                throw new Exception('YesAuthority - accessId can not be array for checkEntity');
+            }
+
             // check for entity permissions  
             if(YesAuthority::checkEntity($entityKey, $entityId)->check($accessId) === true 
                 or YesAuthority::isPublicAccess($accessId)) {
