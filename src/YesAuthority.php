@@ -424,10 +424,6 @@ class YesAuthority
         // if multiple access id/keys
         if(is_array($accessIdKey)) {
 
-            if($this->userRequestForEntity) {
-                throw new Exception('YesAuthority - accessId can not be array for checkEntity');
-            }
-
             $accessResultArray = [];
             // remove duplicates
             $accessIdKey = array_unique($accessIdKey);
