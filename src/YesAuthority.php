@@ -71,6 +71,7 @@ class YesAuthority
     protected $isDirectChecked = true;   
     protected $filterTypes     = 'all';       
     protected $levelsModified = false;      
+    protected $isAccessIdsArray = false;     
     protected $roleLevels = [
         1 => 'CONFIG_ROLE',
         3 => 'DB_ROLE'
@@ -97,6 +98,8 @@ class YesAuthority
         // get permission info from config
         $this->permissions    = config('yes-authority');
         $this->requestCheckStringId = '';
+        $this->isAccessIdsArray = false;
+        $this->userId = null;
     }
     /**
       * configure
@@ -409,9 +412,11 @@ class YesAuthority
      *---------------------------------------------------------------- */
     public function check($accessIdKey = null, $requestForUserId = null, array $options = [])
     {  
+        $this->isAccessIdsArray = false;
         $options = array_merge([
             'internal_details' => $this->accessDetailsRequested,
-            'configure' => true
+            'configure' => true,
+            'isAccessIdsArray' => false
             ], $options);
 
         $isAccess   = false;
@@ -429,6 +434,8 @@ class YesAuthority
             $accessIdKey = array_unique($accessIdKey);
             // no need to reconfigure it
             $options['configure'] = false;
+            $this->isAccessIdsArray = true;
+            $options['isAccessIdsArray'] = true;
             // check each key for the access
             foreach ($accessIdKey as $accessIdKeyItem) {
                 $accessResultArray[$accessIdKeyItem] = $this->check(
@@ -437,7 +444,11 @@ class YesAuthority
                     $options
                 );
             }
-            return $this->processResult($accessIdKey, $requestForUserId, $accessResultArray);
+            $this->isAccessIdsArray = false;
+            // reset identification
+            $this->requestCheckStringId = '';
+            $this->initialize();
+            return $accessResultArray;
         }
         // try to retrive already checked item 
         $existingUniqueIdItem = config(
@@ -463,10 +474,10 @@ class YesAuthority
                     $this->initialize();
                 }
 
-                return $this->processResult($accessIdKey, $requestForUserId, $result);
+                return $this->processResult($accessIdKey, $requestForUserId, $result, $options);
             }
 
-            return $this->processResult($accessIdKey, $requestForUserId, false);
+            return $this->processResult($accessIdKey, $requestForUserId, false, $options);
         }
 
         // if accessKeyId not set then route name will be used as access id key
@@ -484,7 +495,7 @@ class YesAuthority
                 $this->initialize();
             }
 
-            return $this->processResult($accessIdKey, $requestForUserId, true);
+            return $this->processResult($accessIdKey, $requestForUserId, true, $options);
         }
 
         if(! is_string($accessIdKey)) {
@@ -502,10 +513,10 @@ class YesAuthority
 
                 $result = $this->detailsFormat($wildCardResult, $accessIdKey);
 
-                return $this->processResult($accessIdKey, $requestForUserId, $result);
+                return $this->processResult($accessIdKey, $requestForUserId, $result, $options);
             }
 
-            return $this->processResult($accessIdKey, $requestForUserId, $wildCardResult);
+            return $this->processResult($accessIdKey, $requestForUserId, $wildCardResult, $options);
         }
 
         if(!isset($this->accessStages[$accessIdKey])) {
@@ -746,27 +757,27 @@ class YesAuthority
                     $this->initialize();
                 }
 
-                return $this->processResult($accessIdKey, $requestForUserId, $result);
+                return $this->processResult($accessIdKey, $requestForUserId, $result, $options);
             }
 
             if($this->isDirectChecked === true) {
                 $this->initialize();
             }            
 
-            return $this->processResult($accessIdKey, $requestForUserId, true);
+            return $this->processResult($accessIdKey, $requestForUserId, true, $options);
         }
 
         $result = $this->detailsFormat(false, $accessIdKey);
 
         if(! $accessDetailsRequired) {
-            return $this->processResult($accessIdKey, $requestForUserId, false);
+            return $this->processResult($accessIdKey, $requestForUserId, false, $options);
         }
 
         if($this->isDirectChecked === true) {
             $this->initialize();
         }
         
-        return $this->processResult($accessIdKey, $requestForUserId, $result);
+        return $this->processResult($accessIdKey, $requestForUserId, $result, $options);
     }
 
     /**
@@ -778,7 +789,7 @@ class YesAuthority
      *
      * @return mixed
      *---------------------------------------------------------------- */
-    protected function processResult($accessIdKey, $requestForUserId, $accessIdKeyResult)
+    protected function processResult($accessIdKey, $requestForUserId, $accessIdKeyResult, $options = [])
     {  
        // store the result for later use.
        if(is_string($accessIdKey)) {
@@ -788,6 +799,10 @@ class YesAuthority
                     'result' => $accessIdKeyResult,
                 ]
             ]);
+       }
+       if($options['isAccessIdsArray'] == false) {
+            // reset the requestCheckStringId
+            $this->requestCheckStringId = '';
        }
        // let return the actual result
         return $accessIdKeyResult;
@@ -1330,6 +1345,10 @@ class YesAuthority
      *---------------------------------------------------------------- */
     private function initialize() {
 
+        if($this->isAccessIdsArray == true) {
+            return false;
+        }
+
         $this->checkLevel = 99;
         $this->checkLevels = [
             'CONFIG_ROLE'   => 1, // Config Role
@@ -1347,8 +1366,12 @@ class YesAuthority
         $this->isDirectChecked = true;
         $this->levelsModified = false;
         $this->filterTypes = ['all'];
-        $this->configEntity = null;
+        // $this->configEntity = null;
         $this->entityIdentified = [];
+        $this->isAccessIdsArray = false;
+        $this->currentRouteAccessId = null;
+        // $this->roleIdentified = null;
+        // $this->userIdentified = null;
     }
 
     /**
@@ -1394,8 +1417,10 @@ class YesAuthority
         if(!class_exists($entityModelString)) {
             throw new Exception('YesAuthority - Entity model does not exist.');
         }
-        // needs work 
-        //$this->requestCheckStringId .= '_cee_'. $entityKey . '_'. $entityId . '_' . $requestForUserId;
+
+        $this->requestCheckStringId .= '_cee_'. $entityKey . '_'. $entityId . '_' . $requestForUserId;
+
+        $this->entityPermissions = [];
 
         // check if entity available as array
         if(is_array($entityId)) {
@@ -1416,6 +1441,7 @@ class YesAuthority
         }
         // get the permissions out of it
         $rawEntityPermissions = array_get($this->entityIdentified, $permissionColumn);
+        
         // if permissions found
         if(isEmpty($rawEntityPermissions) === false) { 
             // if not an array, make it
