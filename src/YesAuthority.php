@@ -99,6 +99,7 @@ class YesAuthority
         $this->permissions    = config('yes-authority');
         $this->requestCheckStringId = '';
         $this->isAccessIdsArray = false;
+        $this->userId = null;
     }
     /**
       * configure
@@ -414,7 +415,8 @@ class YesAuthority
         $this->isAccessIdsArray = false;
         $options = array_merge([
             'internal_details' => $this->accessDetailsRequested,
-            'configure' => true
+            'configure' => true,
+            'isAccessIdsArray' => false
             ], $options);
 
         $isAccess   = false;
@@ -433,6 +435,7 @@ class YesAuthority
             // no need to reconfigure it
             $options['configure'] = false;
             $this->isAccessIdsArray = true;
+            $options['isAccessIdsArray'] = true;
             // check each key for the access
             foreach ($accessIdKey as $accessIdKeyItem) {
                 $accessResultArray[$accessIdKeyItem] = $this->check(
@@ -455,7 +458,6 @@ class YesAuthority
         // if found return that same
         if($existingUniqueIdItem) {
             return $existingUniqueIdItem['result'];
-          // return $this->processResult($accessIdKey, $requestForUserId, $existingUniqueIdItem['result'], $options);
         }
 
         // check if user is logged in
@@ -798,7 +800,7 @@ class YesAuthority
                 ]
             ]);
        }
-       if($this->isAccessIdsArray == false) {
+       if($options['isAccessIdsArray'] == false) {
             // reset the requestCheckStringId
             $this->requestCheckStringId = '';
        }
@@ -816,7 +818,7 @@ class YesAuthority
      *---------------------------------------------------------------- */
     protected function uniqueIdKeyString($accessIdKey, $requestForUserId)
     {  
-       return md5('yes-authority.__authority_permissions.'
+       return strtolower('yes-authority.__authority_permissions.'
                     .str_replace('.', '_', $accessIdKey)
                     . '_'
                     .($requestForUserId ?: $this->userId)
@@ -1364,8 +1366,12 @@ class YesAuthority
         $this->isDirectChecked = true;
         $this->levelsModified = false;
         $this->filterTypes = ['all'];
-        $this->configEntity = null;
+        // $this->configEntity = null;
         $this->entityIdentified = [];
+        $this->isAccessIdsArray = false;
+        $this->currentRouteAccessId = null;
+        // $this->roleIdentified = null;
+        // $this->userIdentified = null;
     }
 
     /**
