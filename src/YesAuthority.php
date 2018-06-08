@@ -452,7 +452,7 @@ class YesAuthority
         }
         // try to retrive already checked item 
         $existingUniqueIdItem = config(
-            $this->uniqueIdKeyString($accessIdKey, $requestForUserId), 
+            $this->uniqueIdKeyString($accessIdKey, $requestForUserId, $options), 
             null
         );
         // if found return that same
@@ -794,7 +794,7 @@ class YesAuthority
        // store the result for later use.
        if(is_string($accessIdKey)) {
             config([
-                $this->uniqueIdKeyString($accessIdKey, $requestForUserId) => [
+                $this->uniqueIdKeyString($accessIdKey, $requestForUserId, $options) => [
                     'access_id_key' => $accessIdKey,
                     'result' => $accessIdKeyResult,
                 ]
@@ -816,11 +816,12 @@ class YesAuthority
      *
      * @return mixed
      *---------------------------------------------------------------- */
-    protected function uniqueIdKeyString($accessIdKey, $requestForUserId)
+    protected function uniqueIdKeyString($accessIdKey, $requestForUserId, $options = [])
     {  
        return strtolower('yes-authority.__authority_permissions.'
                     .str_replace('.', '_', $accessIdKey)
                     . '_'
+                    . (($options['internal_details']) ? '_ird_' : '')
                     .($requestForUserId ?: $this->userId)
                     . $this->requestCheckStringId);
     }    
