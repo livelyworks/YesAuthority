@@ -1418,8 +1418,6 @@ class YesAuthority
             throw new Exception('YesAuthority - Entity model does not exist.');
         }
 
-        $this->requestCheckStringId .= '_cee_'. $entityKey . '_'. $entityId . '_' . $requestForUserId;
-
         $this->entityPermissions = [];
 
         // check if entity available as array
@@ -1439,6 +1437,13 @@ class YesAuthority
             // if entity model found
             $this->entityIdentified   = $entityFound->toArray();
         }
+
+        if(empty($this->entityIdentified)) {
+            return $this;
+        }
+        
+        $this->requestCheckStringId .= '_cee_'. $entityKey . '_'. $this->entityIdentified[$entityIdColumn] . '_' . $requestForUserId;
+        
         // get the permissions out of it
         $rawEntityPermissions = array_get($this->entityIdentified, $permissionColumn);
         
