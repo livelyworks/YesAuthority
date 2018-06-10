@@ -83,6 +83,7 @@ class YesAuthority
     protected $userRequestForEntity = null;
     protected $pseudoAccessIds = []; 
     protected $requestCheckStringId = '';
+    protected $accessResultContainer = [];
 
     /**
       * Constructor
@@ -100,6 +101,7 @@ class YesAuthority
         $this->requestCheckStringId = '';
         $this->isAccessIdsArray = false;
         $this->userId = null;
+        $this->accessResultContainer = [];
     }
     /**
       * configure
@@ -451,7 +453,8 @@ class YesAuthority
             return $accessResultArray;
         }
         // try to retrive already checked item 
-        $existingUniqueIdItem = config(
+        $existingUniqueIdItem = array_get(
+            $this->accessResultContainer,
             $this->uniqueIdKeyString($accessIdKey, $requestForUserId, $options), 
             null
         );
@@ -793,12 +796,13 @@ class YesAuthority
     {  
        // store the result for later use.
        if(is_string($accessIdKey)) {
-            config([
-                $this->uniqueIdKeyString($accessIdKey, $requestForUserId, $options) => [
-                    'access_id_key' => $accessIdKey,
-                    'result' => $accessIdKeyResult,
-                ]
-            ]);
+
+        $this->accessResultContainer[
+                $this->uniqueIdKeyString($accessIdKey, $requestForUserId, $options)
+            ] = [
+            'access_id_key' => $accessIdKey,
+            'result' => $accessIdKeyResult,
+        ];
        }
        if($options['isAccessIdsArray'] == false) {
             // reset the requestCheckStringId
@@ -818,12 +822,21 @@ class YesAuthority
      *---------------------------------------------------------------- */
     protected function uniqueIdKeyString($accessIdKey, $requestForUserId, $options = [])
     {  
-       return strtolower('yes-authority.__authority_permissions.'
-                    .str_replace('.', '_', $accessIdKey)
+       return strtolower(str_replace('.', '_', $accessIdKey)
                     . '_'
                     . (($options['internal_details']) ? '_ird_' : '')
                     .($requestForUserId ?: $this->userId)
                     . $this->requestCheckStringId);
+    }    
+
+/**
+     * Get Access Result log result
+     *
+     * @return mixed
+     *---------------------------------------------------------------- */
+    public function accessResultLog()
+    {  
+       return $this->accessResultContainer;
     }    
 
     /**
