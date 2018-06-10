@@ -37,9 +37,11 @@
         "branch-alias": {
             "dev-master": "2.x-dev"
         },
-        "providers": [
-            "LivelyWorks\\YesAuthority\\YesAuthorityServiceProvider"
-        ]
+        "laravel": {
+            "providers": [
+                "LivelyWorks\\YesAuthority\\YesAuthorityServiceProvider"
+            ]
+        }
     },
   "minimum-stability": "dev",
   "prefer-stable": true
