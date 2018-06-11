@@ -20,7 +20,7 @@ trait YesAuthorityModelTrait
      *
      * @since  11 JUN 2018
      *------------------------------------------------------------------------ */
-    public function scopeIfPermitted($query, string $permission, string $table = '', string $column = '')
+    public function scopeIfHasAccess($query, string $permission, string $table = '', string $column = '')
     {
         $tableName = '';
         
