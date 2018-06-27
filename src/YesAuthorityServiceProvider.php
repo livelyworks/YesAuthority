@@ -19,6 +19,7 @@ class YesAuthorityServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__.'/config/yes-authority.php' => config_path('yes-authority.php'),
             __DIR__.'/YesAuthorityCheckpostMiddleware.php' => app_path('Http/Middleware/YesAuthorityCheckpostMiddleware.php'),
+            __DIR__.'/YesAuthorityPreCheckpostMiddleware.php' => app_path('Http/Middleware/YesAuthorityPreCheckpostMiddleware.php'),
         ], 'yesauthority');
 
         // required YesAuthority helpers & directives

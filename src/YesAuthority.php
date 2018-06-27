@@ -22,6 +22,13 @@ class YesAuthority
         Store public routes
     */
     protected $publicRoutes = [];
+
+    /*
+        Store guest only routes process
+    */
+    protected $guestOnlyRoutes = [];
+    protected $processPreCheckPost = false;
+
     /*
         Permission Container
     */
@@ -37,14 +44,21 @@ class YesAuthority
     /**
      * Middleware name
      *
-     * @var array
+     * @var string
      */
     protected $middlewareName = "authority.checkpost";    
 
     /**
+     * Pre Checkpost Middleware name
+     *
+     * @var string
+     */
+    protected $preCheckpostMiddlewareName = "authority.pre.checkpost";    
+
+    /**
      * Authority Configurations
      *
-     * @var array
+     * @var mixed
      */
     protected $yesConfig = null;  
     protected $configColRole = null;  
@@ -156,6 +170,9 @@ class YesAuthority
 
         $this->middlewareName = array_get($this->yesConfig, 'middleware_name') 
             ?: $this->middlewareName;
+
+        $this->preCheckpostMiddlewareName = array_get($this->yesConfig, 'pre_checkpost_middleware_name') 
+            ?: $this->preCheckpostMiddlewareName;
 
         if($requestForUserId and ($this->accessScope === 'user')) {
 
@@ -278,6 +295,17 @@ class YesAuthority
         }
         return $this;
     }      
+
+    /**
+      * Restrict result to denied only
+      *
+      * @return this
+      *-----------------------------------------------------------------------*/
+    protected function processPreCheckpostIds()
+    {
+       $this->processPreCheckPost = true;
+       return $this;
+    }    
 
     /**
       * Restrict result to denied only
@@ -890,6 +918,34 @@ class YesAuthority
 
             return  $getResult === true ?: false;
         }
+        // Filter guest only routes
+        if(in_array($this->preCheckpostMiddlewareName, $middleware)) {
+
+            if($this->userIdentified) {
+
+                $this->guestOnlyRoutes[] = $routeName;
+                
+                if($options['internal_details'] === true) {
+
+                    return $this->detailsFormat(false, $routeName, [
+                            'is_public' => true,
+                        ]);
+                }
+                
+                return false;
+
+            } else {
+                
+                if($options['internal_details'] === true) {
+
+                    return $this->detailsFormat(true, $routeName, [
+                            'is_public' => true,
+                        ]);
+                }
+                
+                return true;
+            }
+        }
 
         // set as public route
         $this->publicRoutes[] = $routeName;
@@ -942,7 +998,7 @@ class YesAuthority
      *---------------------------------------------------------------- */
     public function availableRoutes($isUriRequired = false, $requestForUserId = null, array $options = [])
     {
-        $routes =  $this->takeAllowed()->takePublic()->getRoutes($isUriRequired, $requestForUserId, $options);
+        $routes =  $this->processPreCheckpostIds()->takeAllowed()->takePublic()->getRoutes($isUriRequired, $requestForUserId, $options);
 
         return $this->mergePseudoAllowedAccessIds($routes, $requestForUserId, $options);
     }
@@ -1035,6 +1091,16 @@ class YesAuthority
         unset($routeCollection);
 
         $this->initialize();
+        
+        // check if pre check post needed or not
+        if($this->processPreCheckPost === true) {
+            if($isUriRequired) {
+                return array_diff_key($routes, array_flip($this->guestOnlyRoutes));
+            } else {
+                return array_diff($routes, $this->guestOnlyRoutes);
+            }
+            
+        }
 
         return $routes;      
     }
