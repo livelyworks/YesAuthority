@@ -1169,6 +1169,7 @@ class YesAuthority
                                 'is_zone' => true,                                
                                 'dependencies' => array_get($accessZoneContents, 'dependencies'),
                                 'parent' => array_get($accessZoneContents, 'parent'),
+                                'description' => array_get($accessZoneContents, 'description'),
                             ]);
 
                         } elseif(($getResult->isAccess() === true) and ($getResult->isPublic() === true) and (array_intersect($this->filterTypes, ['all', 'public']))) {
@@ -1178,6 +1179,7 @@ class YesAuthority
                                 'is_zone' => true,
                                 'dependencies' => array_get($accessZoneContents, 'dependencies'),
                                 'parent' => array_get($accessZoneContents, 'parent'),
+                                 'description' => array_get($accessZoneContents, 'description'),
                             ]);
 
                         } elseif(($getResult->isAccess() === false) and (array_intersect($this->filterTypes, ['all', 'denied']))) {
@@ -1187,6 +1189,7 @@ class YesAuthority
                                 'is_zone' => true,
                                 'dependencies' => array_get($accessZoneContents, 'dependencies'),
                                 'parent' => array_get($accessZoneContents, 'parent'),
+                                'description' => array_get($accessZoneContents, 'description'),
                             ]);
                         } 
 
@@ -1336,6 +1339,7 @@ class YesAuthority
                 'title' => array_get($this->dynamicAccessZones[$accessIdKey], 'title'),
                 'dependencies' => array_get($this->dynamicAccessZones[$accessIdKey], 'dependencies'),
                 'parent' => array_get($this->dynamicAccessZones[$accessIdKey], 'parent'),
+                'description' => array_get($this->dynamicAccessZones[$accessIdKey], 'description'),
             ];
         }
         
@@ -1463,6 +1467,7 @@ class YesAuthority
             'is_zone' => ifIsset($options['is_zone'], true),
             'dependencies' => ifIsset($options['dependencies'], true, null),
             'parent' => ifIsset($options['parent'], true, null),
+            'description' => ifIsset($options['description'], true, null),
         ], [
            'check_levels' => $this->checkLevels
         ]);
