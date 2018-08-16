@@ -99,6 +99,8 @@ class YesAuthority
     protected $requestCheckStringId = '';
     protected $accessResultContainer = [];
 
+    protected $defaultAllowedAccessIds = [];
+
     /**
       * Constructor
       *
@@ -158,11 +160,12 @@ class YesAuthority
         $this->yesConfig          = array_get($this->permissions, 'config');
         $this->configColRole      = array_get($this->yesConfig, 'col_role');
         $this->configColUserId    = array_get($this->yesConfig, 'col_user_id');
-        $this->configColRoleId    = array_get($this->yesConfig, 'col_role_id') ?: $this->configColUserId;
+        $this->configColRoleId    = array_get($this->yesConfig, 'col_role_id', $this->configColUserId);
         $this->dependentsAccessIds      = array_get($this->permissions, 'dependents');
         $userModelString          = array_get($this->yesConfig, 'user_model');
         $roleModelString          = array_get($this->yesConfig, 'role_model');
         $this->pseudoAccessIds    = array_get($this->yesConfig, 'pseudo_access_ids', []);
+        $this->defaultAllowedAccessIds = array_get($this->yesConfig, 'default_allowed_access_ids', []);
 
         if(isEmpty($this->yesConfig) or isEmpty($this->configColRole) or isEmpty($this->configColUserId)) {
             throw new Exception('YesAuthority - config item should contain col_role, col_user_id');
@@ -531,6 +534,18 @@ class YesAuthority
 
         if(! is_string($accessIdKey)) {
             throw new Exception('YesAuthority - Invalid AccessIdKey parameter for check');            
+        }
+
+        // allow if the access id allowed defaultly 
+        if(in_array($accessIdKey, $this->defaultAllowedAccessIds) === true) {
+
+            if($accessDetailsRequired === true) {
+                $result = $this->detailsFormat(true, $accessIdKey, [
+                    'override_result_by' => 'DEFAULT_ALLOWED'
+                ]);
+                return $this->processResult($accessIdKey, $requestForUserId, $result, $options);
+            }
+            return $this->processResult($accessIdKey, $requestForUserId, true, $options);
         }
 
         /*
@@ -1256,15 +1271,18 @@ class YesAuthority
             $zoneDeniedAccessIds = [];
 
             $denyList = $denyList ?: [];
-
+            // Zone Parent child collection
             foreach ($this->dynamicAccessZones as $accessZone => $accessZoneContents) {
+                // update list of permissions based on Parent Zones
+                $accessList = $this->collectParentZones($accessZone, $accessList, $accessZone);
+                $denyList = $this->collectParentZones($accessZone, $denyList, $accessZone);
 
                 if(is_array($accessList) and in_array($accessZone, $accessList)) {
-                    $zoneAllowedAccessIds = array_merge($zoneAllowedAccessIds, array_get($this->dynamicAccessZones[$accessZone], 'access_ids') ?: []);
+                    $zoneAllowedAccessIds = array_merge($zoneAllowedAccessIds, array_get($this->dynamicAccessZones[$accessZone], 'access_ids', []));
                 }
 
                 if(is_array($denyList) and in_array($accessZone, $denyList)) {
-                    $zoneDeniedAccessIds = array_merge($zoneDeniedAccessIds, array_get($this->dynamicAccessZones[$accessZone], 'access_ids') ?: []);
+                    $zoneDeniedAccessIds = array_merge($zoneDeniedAccessIds, array_get($this->dynamicAccessZones[$accessZone], 'access_ids', []));
                 }
             }
 
@@ -1337,6 +1355,39 @@ class YesAuthority
     }
 
     /**
+     * Collect the Parent and child zones & return permissions based on
+     *
+     * @param string $accessZone
+     * @param array  $allowDenyList
+     * @param string $intialAccessZone
+     * 
+     * @return array
+     *---------------------------------------------------------------- */
+    protected function collectParentZones($accessZone, $allowDenyList, $intialAccessZone) 
+    {  
+        // get access zone details
+        $accessZoneContents = array_get($this->dynamicAccessZones, $accessZone);
+        // name of the parent zone
+        $parentZoneName = array_get($accessZoneContents, 'parent');
+        // check if the Parent & Self zone are same
+        if($parentZoneName == $accessZone) {
+            throw new Exception("YesAuthority - Zone's Self Parent Relation - $accessZone");
+        }
+        // if parent is there
+        if($parentZoneName) {
+            // grab the same for nested parents
+            $allowDenyList = $this->collectParentZones($parentZoneName, $allowDenyList, $intialAccessZone);
+            // *** SEQUENCE is IMPORTANT - DO NOT CHANGE ***
+            // add item to access/deny list
+            if(is_array($allowDenyList) and in_array($parentZoneName, $allowDenyList)) {
+                $allowDenyList[] = $accessZone;
+            }
+        }
+        // get access list back
+        return array_unique($allowDenyList);
+    }
+
+    /**
      * Details format
      *
      * @param string $idKey
@@ -1365,6 +1416,7 @@ class YesAuthority
         $options = array_merge([
             'response_code' => $isAccess ? 200 : 401,
             'message' => $isAccess ? 'OK' : 'Unauthorized',
+            'override_result_by' => false
         ], $options);
 
         $conditionsIfAny = [];
@@ -1390,6 +1442,10 @@ class YesAuthority
                     break;
                 } 
             }
+        }
+
+        if($options['override_result_by']) {
+            $resultBy = $options['override_result_by'];
         }
 
         $result = new YesAuthorityResult([
@@ -1482,6 +1538,7 @@ class YesAuthority
         $entityIdColumn     = array_get($this->configEntity, 'id_column');
         $permissionColumn   = array_get($this->configEntity, 'permission_column');
         $userIdColumn       = array_get($this->configEntity, 'user_id_column');
+        $whereClouses       = array_get($this->configEntity, 'where', []);
 
         if(!$entityModelString 
            // or !$entityIdColumn 
@@ -1506,10 +1563,10 @@ class YesAuthority
         } else {
             $entityModel = new $entityModelString;
             $entityIdColumn = $entityIdColumn ? $entityIdColumn : $entityModel->getKeyName();
-            $entityFound = $entityModel->where([
+            $entityFound = $entityModel->where(array_merge([
                 $entityIdColumn => $entityId,
                 $userIdColumn => $this->userRequestForEntity,
-            ])->first();
+            ], $whereClouses))->first();
 
             if(isEmpty($entityFound)) {
                 return $this;
