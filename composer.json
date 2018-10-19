@@ -1,7 +1,7 @@
 {
     "name": "livelyworks/laravel-yes-authority",
     "description": "YesAuthority - Laravel Routes Authorization Library",
-    "keywords": ["laravel", "laravel 5", "authentication", "routes authorization", "authorization","cancan","can","authority", "acl","role","permission","ability","allow","deny","security","laravel 5.1", "laravel 5.2","laravel 5.3", "laravel 5.4", "laravel 5.5", "laravel routes authority"],
+    "keywords": ["laravel", "laravel 5", "authentication", "routes authorization", "authorization","cancan","can","authority", "acl","role","permission","ability","allow","deny","security","laravel 5.1", "laravel 5.2","laravel 5.3", "laravel 5.4", "laravel 5.5","laravel 5.6","laravel 5.7", "laravel routes authority"],
     "license": "MIT",
     "authors": [
         {
@@ -25,7 +25,7 @@
     },
     "require": {
         "php": ">=5.4.0",
-        "laravel/framework": "5.1.x|5.2.x|5.3.x|5.4.x|5.5.x|5.6.x",
+        "laravel/framework": "5.1.x|5.2.x|5.3.x|5.4.x|5.5.x|5.6.x|5.7.x",
         "livelyworks/laraware": ">=1.0.4"
     },
     "autoload": {

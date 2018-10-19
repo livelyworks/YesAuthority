@@ -163,12 +163,21 @@ class YesAuthority
         $this->configColRoleId    = array_get($this->yesConfig, 'col_role_id', $this->configColUserId);
         $this->dependentsAccessIds      = array_get($this->permissions, 'dependents');
         $userModelString          = array_get($this->yesConfig, 'user_model');
+        $userModelWhereClouses          = array_get($this->yesConfig, 'user_model_where');
         $roleModelString          = array_get($this->yesConfig, 'role_model');
         $this->pseudoAccessIds    = array_get($this->yesConfig, 'pseudo_access_ids', []);
         $this->defaultAllowedAccessIds = array_get($this->yesConfig, 'default_allowed_access_ids', []);
 
         if(isEmpty($this->yesConfig) or isEmpty($this->configColRole) or isEmpty($this->configColUserId)) {
             throw new Exception('YesAuthority - config item should contain col_role, col_user_id');
+        }
+
+        $userModelWhereClousesContainer = [];
+        if($userModelWhereClouses and is_array($userModelWhereClouses)) {
+            foreach($userModelWhereClouses as $userModelWhereClouseKey => $userModelWhereClouseValue) {
+                $userModelWhereClousesContainer[$userModelWhereClouseKey] 
+                = is_callable($userModelWhereClouseValue) ? $userModelWhereClouseValue() : $userModelWhereClouseValue;
+            }
         }
 
         $this->middlewareName = array_get($this->yesConfig, 'middleware_name') 
@@ -190,9 +199,16 @@ class YesAuthority
             $userModel = new $userModelString;
             //$userFound = $userModel->findOrFail($requestForUserId);
             if(is_array($requestForUserId)) {
-                $userFound = $userModel->where($requestForUserId)->first();
+                $userFound = $userModel->where(array_merge(
+                    $userModelWhereClousesContainer, 
+                    $requestForUserId))->first();
             } else {
-                $userFound = $userModel->where($this->configColUserId, $requestForUserId)->first();
+                $userFound = $userModel->where(array_merge(
+                    [
+                        $this->configColUserId => $requestForUserId
+                    ],
+                    $userModelWhereClousesContainer
+                ))->first();
             }
             $this->userIdentified   = $userFound->toArray();
         }
@@ -210,12 +226,10 @@ class YesAuthority
                             throw new Exception('YesAuthority - User model does not exist.');
                         }
                         $userModel = new $userModelString;
-                        $userFound = $userModel->where($this->configColUserId, Auth::id())->first();
-                       /* if(is_array($requestForUserId)) {
-                            $userFound = $userModel->where($requestForUserId)->first();
-                        } else {
-                            $userFound = $userModel->where($this->configColUserId, Auth::id())->first();
-                        }*/
+                        $userFound = $userModel->where(array_merge([
+                                $this->configColUserId => Auth::id()
+                            ], $userModelWhereClousesContainer)
+                        )->first();
                         $this->userIdentified   = $userFound->toArray();
                     } else {
                         $this->userIdentified  = Auth::user()->toArray();
