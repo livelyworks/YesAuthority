@@ -111,9 +111,16 @@ class YesAuthority
     function __construct()
     {
         $this->initialize();
+        
 
         // get permission info from config
         $this->permissions    = config('yes-authority');
+        // if file is stored somewhere else
+        $customConfigPath = array_get($this->permissions, 'custom_config_path');
+        if($customConfigPath) {
+            $this->permissions = require $customConfigPath;
+        }
+
         $this->requestCheckStringId = '';
         $this->isAccessIdsArray = false;
         $this->userId = null;
@@ -161,6 +168,7 @@ class YesAuthority
         $this->configColRole      = array_get($this->yesConfig, 'col_role');
         $this->configColUserId    = array_get($this->yesConfig, 'col_user_id');
         $this->configColRoleId    = array_get($this->yesConfig, 'col_role_id', $this->configColUserId);
+
         $this->dependentsAccessIds      = array_get($this->permissions, 'dependents');
         $userModelString          = array_get($this->yesConfig, 'user_model');
         $userModelWhereClouses          = array_get($this->yesConfig, 'user_model_where');
@@ -581,6 +589,16 @@ class YesAuthority
 
         if(!isset($this->accessStages[$accessIdKey])) {
             $this->accessStages[$accessIdKey] = [];
+        }
+
+        if(array_get($this->permissions, 'rules.base')) {
+            $isAccess = $this->performChecks($isAccess, $accessIdKey, 
+                array_get($this->permissions, 'rules.base.allow'), 
+                array_get($this->permissions, 'rules.base.deny'),
+                [
+                    'check_level' => 'CONFIG_BASE'
+                ]
+            );
         }
 
         if($this->performLevelChecks(1)) {
@@ -1506,6 +1524,7 @@ class YesAuthority
 
         $this->checkLevel = 99;
         $this->checkLevels = [
+            'CONFIG_BASE'   => 0,
             'CONFIG_ROLE'   => 1, // Config Role
             'CONFIG_USER'   => 2, // Config User
             'DB_ROLE'       => 3, // DB Role
