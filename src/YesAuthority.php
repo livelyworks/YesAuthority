@@ -87,6 +87,7 @@ class YesAuthority
     protected $levelsModified = false;      
     protected $isAccessIdsArray = false;     
     protected $roleLevels = [
+        0 => 'CONFIG_BASE',
         1 => 'CONFIG_ROLE',
         3 => 'DB_ROLE'
     ];    
@@ -375,6 +376,8 @@ class YesAuthority
             $levels = [$levels];
         }
 
+        array_unshift($levels, 'CONFIG_BASE');
+
         $this->checkLevels = array_only($this->checkLevels, $levels);
         $this->levelsModified = true;
 
@@ -401,6 +404,8 @@ class YesAuthority
         if(! is_array($levels)) {
             $levels = [$levels];
         }
+
+        array_unshift($levels, 'CONFIG_BASE');
 
         if(empty(array_only($this->checkLevels, $levels))) {
             throw new Exception('YesAuthority::checkExcept() Invalid array parameter, ' 
