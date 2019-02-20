@@ -101,6 +101,7 @@ class YesAuthority
     protected $accessResultContainer = [];
 
     protected $defaultAllowedAccessIds = [];
+    protected $uniqueIdKeyString = null;
 
     /**
       * Constructor
@@ -259,6 +260,7 @@ class YesAuthority
                         $this->userPermissions = array_merge($this->userPermissions, $rawUserPermissions);
                     }
                 }
+
             } 
 
             if($this->accessScope === 'role') {
@@ -510,10 +512,13 @@ class YesAuthority
             $this->initialize();
             return $accessResultArray;
         }
+
+        $this->uniqueIdKeyString = $this->generateUniqueIdKeyString($accessIdKey, $requestForUserId, $options);
+
         // try to retrive already checked item 
         $existingUniqueIdItem = array_get(
             $this->accessResultContainer,
-            $this->uniqueIdKeyString($accessIdKey, $requestForUserId, $options), 
+            $this->uniqueIdKeyString, 
             null
         );
         // if found return that same
@@ -591,9 +596,9 @@ class YesAuthority
 
             return $this->processResult($accessIdKey, $requestForUserId, $wildCardResult, $options);
         }
-
-        if(!isset($this->accessStages[$accessIdKey])) {
-            $this->accessStages[$accessIdKey] = [];
+        
+        if(!isset($this->accessStages[$this->uniqueIdKeyString])) {
+            $this->accessStages[$this->uniqueIdKeyString] = [];
         }
 
         if(array_get($this->permissions, 'rules.base')) {
@@ -644,7 +649,7 @@ class YesAuthority
                 );
             }
        }    
-
+    
        if($this->performLevelChecks(4)) {
             if($this->userPermissions and !empty($this->userPermissions)) {
                  // check for permissions using user custom permissions
@@ -750,8 +755,8 @@ class YesAuthority
                     );
 
                     if((is_bool($entityConditionIsAccess) === true)) {
-                        $this->accessStages[$accessIdKey]['__result'] = 'ENTITY_CONDITION';
-                        $isAccess = $this->accessStages[$accessIdKey]['ENTITY_CONDITION'] = $entityConditionIsAccess;
+                        $this->accessStages[$this->uniqueIdKeyString]['__result'] = 'ENTITY_CONDITION';
+                        $isAccess = $this->accessStages[$this->uniqueIdKeyString]['ENTITY_CONDITION'] = $entityConditionIsAccess;
                     }
                 }
             }
@@ -811,18 +816,18 @@ class YesAuthority
                         // expect boolean 
                         if(($isMatchFound === true) and $uses and (is_bool($isConditionalAccess) === true)) {   
 
-                            if(! isset($this->accessStages[$accessIdKey]['__conditions'])) {
-                                $this->accessStages[$accessIdKey]['__conditions'] = [];
+                            if(! isset($this->accessStages[$this->uniqueIdKeyString]['__conditions'])) {
+                                $this->accessStages[$this->uniqueIdKeyString]['__conditions'] = [];
                             }
 
-                            $this->accessStages[$accessIdKey]['__result'] = 'CONDITIONS';
-                            $name = (array_key_exists($name, $this->accessStages[$accessIdKey]['__conditions'])) 
+                            $this->accessStages[$this->uniqueIdKeyString]['__result'] = 'CONDITIONS';
+                            $name = (array_key_exists($name, $this->accessStages[$this->uniqueIdKeyString]['__conditions'])) 
                                         ? $name.'_'.$index : $name;
 
-                            $this->accessStages[$accessIdKey]['__conditions']['__result'] = $name;
-                            $this->accessStages[$accessIdKey]['__conditions'][$name] = $isConditionalAccess;
+                            $this->accessStages[$this->uniqueIdKeyString]['__conditions']['__result'] = $name;
+                            $this->accessStages[$this->uniqueIdKeyString]['__conditions'][$name] = $isConditionalAccess;
 
-                            $isAccess = $this->accessStages[$accessIdKey]['CONDITIONS'] = $isConditionalAccess;
+                            $isAccess = $this->accessStages[$this->uniqueIdKeyString]['CONDITIONS'] = $isConditionalAccess;
                         }
 
                     }
@@ -878,7 +883,7 @@ class YesAuthority
        if(is_string($accessIdKey)) {
 
         $this->accessResultContainer[
-                $this->uniqueIdKeyString($accessIdKey, $requestForUserId, $options)
+                $this->uniqueIdKeyString
             ] = [
             'access_id_key' => $accessIdKey,
             'result' => $accessIdKeyResult,
@@ -900,7 +905,7 @@ class YesAuthority
      *
      * @return mixed
      *---------------------------------------------------------------- */
-    protected function uniqueIdKeyString($accessIdKey, $requestForUserId, $options = [])
+    protected function generateUniqueIdKeyString($accessIdKey, $requestForUserId, $options = [])
     {  
        return strtolower(str_replace('.', '_', $accessIdKey)
                     . '_'
@@ -1371,7 +1376,7 @@ class YesAuthority
         }
 
         if(is_array($this->dynamicAccessZones) and array_key_exists($accessIdKey, $this->dynamicAccessZones)) {
-            $this->accessStages[$accessIdKey]['__data'] = [
+            $this->accessStages[$this->uniqueIdKeyString]['__data'] = [
                 'is_zone' => true,
                 'title' => array_get($this->dynamicAccessZones[$accessIdKey], 'title'),
                 'dependencies' => array_get($this->dynamicAccessZones[$accessIdKey], 'dependencies'),
@@ -1382,14 +1387,14 @@ class YesAuthority
         
         // if it specific item then its important
         if($specific) {
-            $this->accessStages[$accessIdKey][$options['check_level']] =  ($specific === 'allow') ? true : false;
-            $this->accessStages[$accessIdKey]['__result'] = $options['check_level'];
-            return $this->accessStages[$accessIdKey][$options['check_level']];
+            $this->accessStages[$this->uniqueIdKeyString][$options['check_level']] =  ($specific === 'allow') ? true : false;
+            $this->accessStages[$this->uniqueIdKeyString]['__result'] = $options['check_level'];
+            return $this->accessStages[$this->uniqueIdKeyString][$options['check_level']];
         }
 
         if(empty($decisionStrength) === false) {
-            $this->accessStages[$accessIdKey]['__result'] = $options['check_level'];
-            return $this->accessStages[$accessIdKey][$options['check_level']] =  $decisionStrength[max(array_keys($decisionStrength))];
+            $this->accessStages[$this->uniqueIdKeyString]['__result'] = $options['check_level'];
+            return $this->accessStages[$this->uniqueIdKeyString][$options['check_level']] =  $decisionStrength[max(array_keys($decisionStrength))];
         }
 
         return $isAccess;
@@ -1437,8 +1442,8 @@ class YesAuthority
      *---------------------------------------------------------------- */
     protected function detailsFormat($isAccess, $accessIdKey, $options = []) {
 
-        if(!empty($this->accessStages[$accessIdKey])) {
-            $itemData = array_pull($this->accessStages[$accessIdKey], '__data');
+        if(!empty($this->accessStages[$this->uniqueIdKeyString])) {
+            $itemData = array_pull($this->accessStages[$this->uniqueIdKeyString], '__data');
 
             if(is_array($itemData) and !empty($itemData)) {
                 $options = array_merge($options, $itemData);
@@ -1463,9 +1468,9 @@ class YesAuthority
         $conditionsIfAny = [];
         $conditionResult = null;
 
-        $resultBy = ifIsset($this->accessStages[$accessIdKey], function() use (&$accessIdKey, &$conditionsIfAny, &$conditionResult) {
-                        $conditionsIfAny = array_pull($this->accessStages[$accessIdKey], '__conditions');
-                return array_pull($this->accessStages[$accessIdKey], '__result');
+        $resultBy = ifIsset($this->accessStages[$this->uniqueIdKeyString], function() use (&$accessIdKey, &$conditionsIfAny, &$conditionResult) {
+                        $conditionsIfAny = array_pull($this->accessStages[$this->uniqueIdKeyString], '__conditions');
+                return array_pull($this->accessStages[$this->uniqueIdKeyString], '__result');
             }, null);
 
         if(! empty($conditionsIfAny)) {
@@ -1475,7 +1480,7 @@ class YesAuthority
         $parentLevel = null;
         // find parent level item
         if($resultBy ) {
-            foreach (array_reverse($this->accessStages[$accessIdKey]) as $key => $value) {
+            foreach (array_reverse($this->accessStages[$this->uniqueIdKeyString]) as $key => $value) {
                 $levelKeyId = $this->checkLevels[$key];
                 $resultKeyId = $this->checkLevels[$resultBy];
                 if(($levelKeyId < $resultKeyId) and !$parentLevel) {
@@ -1497,7 +1502,7 @@ class YesAuthority
             'upper_level' => $parentLevel,
             'condition_result_by' => $conditionResult,
             'conditions_checked' => $conditionsIfAny,
-            'levels_checked' => ifIsset($this->accessStages[$accessIdKey], true, []),
+            'levels_checked' => ifIsset($this->accessStages[$this->uniqueIdKeyString], true, []),
             'access_id_key' => $accessIdKey,
             'title' => ifIsset($options['title'], true, null),
             'is_public' => isset($options['is_public']) ? $options['is_public'] : false,
@@ -1551,6 +1556,7 @@ class YesAuthority
         $this->currentRouteAccessId = null;
         // $this->roleIdentified = null;
         // $this->userIdentified = null;
+        $this->userPermissions = [];
     }
 
     /**
