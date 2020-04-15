@@ -3,8 +3,8 @@
 namespace LivelyWorks\YesAuthority;
 
 /*
- * YesAuthority 
- * 
+ * YesAuthority
+ *
  * Laravel Route Authorization system
  *
  *--------------------------------------------------------------------------- */
@@ -32,7 +32,7 @@ class YesAuthority
     /*
         Permission Container
     */
-    protected $permissions = [];   
+    protected $permissions = [];
 
     /**
      * Custom Permissions holder
@@ -46,57 +46,57 @@ class YesAuthority
      *
      * @var string
      */
-    protected $middlewareName = "authority.checkpost";    
+    protected $middlewareName = "authority.checkpost";
 
     /**
      * Pre Checkpost Middleware name
      *
      * @var string
      */
-    protected $preCheckpostMiddlewareName = "authority.pre.checkpost";    
+    protected $preCheckpostMiddlewareName = "authority.pre.checkpost";
 
     /**
      * Authority Configurations
      *
      * @var mixed
      */
-    protected $yesConfig = null;  
-    protected $configColRole = null;  
+    protected $yesConfig = null;
+    protected $configColRole = null;
     protected $configColUserId = null;
-    protected $configColRoleId = null;    
+    protected $configColRoleId = null;
     protected $dependentsAccessIds = null;
     protected $userIdentified;
-    protected $roleIdentified;    
+    protected $roleIdentified;
     protected $userRoleId;
-    protected $userId;         
-    protected $configColPermissions = [];     
-    protected $configColRolePermissions = []; 
-    protected $dynamicAccessZones = [];   
-    protected $currentRouteAccessId;       
-    protected $dynamicPermissionStorage = [];     
-    protected $userPermissions = [];   
-    protected $userRolePermissions = [];     
+    protected $userId;
+    protected $configColPermissions = [];
+    protected $configColRolePermissions = [];
+    protected $dynamicAccessZones = [];
+    protected $currentRouteAccessId;
+    protected $dynamicPermissionStorage = [];
+    protected $userPermissions = [];
+    protected $userRolePermissions = [];
     protected $checkLevels = [];
-    protected $checkLevel = 99;  
-    protected $accessStages = [];     
-    protected $allowedVia = null;      
+    protected $checkLevel = 99;
+    protected $accessStages = [];
+    protected $allowedVia = null;
     protected $accessDetailsRequested = false;
-    protected $accessScope = [];  
-    protected $isDirectChecked = true;   
-    protected $filterTypes     = 'all';       
-    protected $levelsModified = false;      
-    protected $isAccessIdsArray = false;     
+    protected $accessScope = [];
+    protected $isDirectChecked = true;
+    protected $filterTypes     = 'all';
+    protected $levelsModified = false;
+    protected $isAccessIdsArray = false;
     protected $roleLevels = [
         0 => 'CONFIG_BASE',
         1 => 'CONFIG_ROLE',
         3 => 'DB_ROLE'
-    ];    
+    ];
 
     protected $configEntity = null;
     protected $entityPermissions = [];
     protected $entityIdentified = [];
     protected $userRequestForEntity = null;
-    protected $pseudoAccessIds = []; 
+    protected $pseudoAccessIds = [];
     protected $requestCheckStringId = '';
     protected $accessResultContainer = [];
 
@@ -104,22 +104,22 @@ class YesAuthority
     protected $uniqueIdKeyString = null;
 
     /**
-      * Constructor
-      *
-      *
-      * @return void
-      *-----------------------------------------------------------------------*/
+     * Constructor
+     *
+     *
+     * @return void
+     *-----------------------------------------------------------------------*/
 
     function __construct()
     {
         $this->initialize();
-        
+
 
         // get permission info from config
         $this->permissions    = config('yes-authority');
         // if file is stored somewhere else
         $customConfigPath = array_get($this->permissions, 'custom_config_path');
-        if($customConfigPath) {
+        if ($customConfigPath) {
             $this->permissions = require $customConfigPath;
         }
 
@@ -129,27 +129,28 @@ class YesAuthority
         $this->accessResultContainer = [];
     }
     /**
-      * configure
-      *
-      *
-      * @return void
-      *-----------------------------------------------------------------------*/
+     * configure
+     *
+     *
+     * @return void
+     *-----------------------------------------------------------------------*/
     protected function configure($requestForUserId = null, $options = [])
     {
-        if(isEmpty($this->permissions) and is_array($this->permissions) === false) {
-           throw new Exception('YesAuthority - permissions empty. Please check your YesAuthority configurations.');
+        if (isEmpty($this->permissions) and is_array($this->permissions) === false) {
+            throw new Exception('YesAuthority - permissions empty. Please check your YesAuthority configurations.');
         }
 
-        if($this->configEntity and !empty($this->configEntity) and $requestForUserId) {
+        if ($this->configEntity and !empty($this->configEntity) and $requestForUserId) {
             throw new Exception('YesAuthority - use requestForUserId via checkEntity method.');
         }
 
-        if($this->userRequestForEntity) {
+        if ($this->userRequestForEntity) {
             $requestForUserId = $this->userRequestForEntity;
         }
 
-        if($requestForUserId) {
+        if ($requestForUserId) {
             $this->userIdentified = true;
+            $requestForUserId = is_numeric($requestForUserId) ? (int) $requestForUserId :  $requestForUserId;
         } else {
             $this->userIdentified = Auth::check() ?: false;
         }
@@ -157,7 +158,7 @@ class YesAuthority
         $this->currentRouteAccessId = Route::currentRouteName();
         // check of roles has permissions by extending another role
         $rules = array_get($this->permissions, 'rules.roles', []);
-        if(!empty($rules)) {
+        if (!empty($rules)) {
             // loop for each role rule
             foreach ($rules as $ruleKey => $ruleValue) {
                 // extend permissions by roles
@@ -166,6 +167,7 @@ class YesAuthority
             // unset unnecessary
             unset($rules);
         }
+        $this->userRolePermissions = [];
         $this->yesConfig          = array_get($this->permissions, 'config');
         $this->configColRole      = array_get($this->yesConfig, 'col_role');
         $this->configColUserId    = array_get($this->yesConfig, 'col_user_id');
@@ -178,40 +180,41 @@ class YesAuthority
         $this->pseudoAccessIds    = array_get($this->yesConfig, 'pseudo_access_ids', []);
         $this->defaultAllowedAccessIds = array_get($this->yesConfig, 'default_allowed_access_ids', []);
 
-        if(isEmpty($this->yesConfig) or isEmpty($this->configColRole) or isEmpty($this->configColUserId)) {
+        if (isEmpty($this->yesConfig) or isEmpty($this->configColRole) or isEmpty($this->configColUserId)) {
             throw new Exception('YesAuthority - config item should contain col_role, col_user_id');
         }
 
         $userModelWhereClousesContainer = [];
-        if($userModelWhereClouses and is_array($userModelWhereClouses)) {
-            foreach($userModelWhereClouses as $userModelWhereClouseKey => $userModelWhereClouseValue) {
-                $userModelWhereClousesContainer[$userModelWhereClouseKey] 
-                = is_callable($userModelWhereClouseValue) ? $userModelWhereClouseValue() : $userModelWhereClouseValue;
+        if ($userModelWhereClouses and is_array($userModelWhereClouses)) {
+            foreach ($userModelWhereClouses as $userModelWhereClouseKey => $userModelWhereClouseValue) {
+                $userModelWhereClousesContainer[$userModelWhereClouseKey]
+                    = is_callable($userModelWhereClouseValue) ? $userModelWhereClouseValue() : $userModelWhereClouseValue;
             }
         }
 
-        $this->middlewareName = array_get($this->yesConfig, 'middleware_name') 
+        $this->middlewareName = array_get($this->yesConfig, 'middleware_name')
             ?: $this->middlewareName;
 
-        $this->preCheckpostMiddlewareName = array_get($this->yesConfig, 'pre_checkpost_middleware_name') 
+        $this->preCheckpostMiddlewareName = array_get($this->yesConfig, 'pre_checkpost_middleware_name')
             ?: $this->preCheckpostMiddlewareName;
 
-        if($requestForUserId and ($this->accessScope === 'user')) {
+        if ($requestForUserId and ($this->accessScope === 'user')) {
 
-            if(! is_string($userModelString)) {
+            if (!is_string($userModelString)) {
                 throw new Exception('YesAuthority - Please set key for user_model in config');
             }
 
-            if(!class_exists($userModelString)) {
+            if (!class_exists($userModelString)) {
                 throw new Exception('YesAuthority - User model does not exist.');
             }
 
             $userModel = new $userModelString;
             //$userFound = $userModel->findOrFail($requestForUserId);
-            if(is_array($requestForUserId)) {
+            if (is_array($requestForUserId)) {
                 $userFound = $userModel->where(array_merge(
-                    $userModelWhereClousesContainer, 
-                    $requestForUserId))->first();
+                    $userModelWhereClousesContainer,
+                    $requestForUserId
+                ))->first();
             } else {
                 $userFound = $userModel->where(array_merge(
                     [
@@ -223,20 +226,21 @@ class YesAuthority
             $this->userIdentified   = $userFound->toArray();
         }
 
-        if($this->userIdentified) {
+        if ($this->userIdentified) {
 
             $this->configColPermissions = array_get($this->yesConfig, 'col_user_permissions');
             $this->configColRolePermissions = array_get($this->yesConfig, 'col_role_permissions') ?: $this->configColPermissions;
 
-            if($this->accessScope !== 'role') {
-                if(! $requestForUserId) {
+            if ($this->accessScope !== 'role') {
+                if (!$requestForUserId) {
                     // consider custom user model even if user is logged in for permissions
-                    if(is_string($userModelString)) {
-                        if(!class_exists($userModelString)) {
+                    if (is_string($userModelString)) {
+                        if (!class_exists($userModelString)) {
                             throw new Exception('YesAuthority - User model does not exist.');
                         }
                         $userModel = new $userModelString;
-                        $userFound = $userModel->where(array_merge([
+                        $userFound = $userModel->where(
+                            array_merge([
                                 $this->configColUserId => Auth::id()
                             ], $userModelWhereClousesContainer)
                         )->first();
@@ -244,47 +248,46 @@ class YesAuthority
                     } else {
                         $this->userIdentified  = Auth::user()->toArray();
                     }
-
                 }
 
                 $this->userRoleId     = array_get($this->userIdentified, $this->configColRole);
                 $this->userId         = array_get($this->userIdentified, $this->configColUserId);
 
-                if($this->configColPermissions and isEmpty(array_get($this->userIdentified, $this->configColPermissions)) === false) {
-                
+                if ($this->configColPermissions and isEmpty(array_get($this->userIdentified, $this->configColPermissions)) === false) {
+
                     $rawUserPermissions = array_get($this->userIdentified, $this->configColPermissions);
 
-                    if(is_array($rawUserPermissions) === false) {
-                        $this->userPermissions = array_merge($this->userPermissions, collect(json_decode($rawUserPermissions))->toArray());
+                    if (is_array($rawUserPermissions) === false) {
+                        $this->userPermissions = array_merge($this->userPermissions, json_decode($rawUserPermissions, true)->toArray());
                     } else {
                         $this->userPermissions = array_merge($this->userPermissions, $rawUserPermissions);
                     }
                 }
+            }
 
-            } 
+            if ($this->accessScope === 'role') {
 
-            if($this->accessScope === 'role') {
-
-                if($remaingLevels = array_except($this->checkLevels, $this->roleLevels) and ($this->levelsModified === true)) {
-                    throw new Exception(implode(array_keys($remaingLevels), ', '). ' not allowed for role based check');
-                } elseif($remaingLevels and ($this->levelsModified === 'upto')) {
+                if ($remaingLevels = array_except($this->checkLevels, $this->roleLevels) and ($this->levelsModified === true)) {
+                    throw new Exception(implode(', ', array_keys($remaingLevels)) . ' not allowed for role based check');
+                } elseif ($remaingLevels and ($this->levelsModified === 'upto')) {
                     throw new Exception('Using YesAuthority::checkUpto() with YesAuthority::viaRole() is not permitted');
                 }
+
 
                 $this->userRoleId = $requestForUserId;
             }
 
-            if($roleModelString and is_string($roleModelString)) {
+            if ($roleModelString and is_string($roleModelString)) {
                 $roleModel = new $roleModelString;
                 $roleFound = $roleModel->findOrFail($this->userRoleId);
                 $this->roleIdentified   = $roleFound->toArray();
 
-                if($this->configColRolePermissions and isEmpty(array_get($this->roleIdentified, $this->configColRolePermissions)) === false) {
-            
+                if ($this->configColRolePermissions and isEmpty(array_get($this->roleIdentified, $this->configColRolePermissions)) === false) {
+
                     $rawUserRolePermissions = array_get($this->roleIdentified, $this->configColRolePermissions);
 
-                    if(is_array($rawUserRolePermissions) === false) {
-                        $this->userRolePermissions = array_merge($this->userRolePermissions, collect(json_decode($rawUserRolePermissions))->toArray());
+                    if (is_array($rawUserRolePermissions) === false) {
+                        $this->userRolePermissions = array_merge($this->userRolePermissions, json_decode($rawUserRolePermissions, true));
                     } else {
                         $this->userRolePermissions = array_merge($this->userRolePermissions, $rawUserRolePermissions);
                     }
@@ -292,89 +295,89 @@ class YesAuthority
             }
 
             $this->dynamicAccessZones = array_get($this->permissions, 'dynamic_access_zones');
-        }    
+        }
     }
 
     /**
-      * Get the permission details of checks
-      *
-      * @return this
-      *-----------------------------------------------------------------------*/
+     * Get the permission details of checks
+     *
+     * @return this
+     *-----------------------------------------------------------------------*/
     public function withDetails()
     {
         $this->requestCheckStringId .= '_wd';
         $this->accessDetailsRequested = true;
         return $this;
-    }  
+    }
 
     /**
-      * Set the requested filter types for routes/keys/zones
-      *
-      * @return this
-      *-----------------------------------------------------------------------*/
-    private function setFilterTypes( $type = 'all')
+     * Set the requested filter types for routes/keys/zones
+     *
+     * @return this
+     *-----------------------------------------------------------------------*/
+    private function setFilterTypes($type = 'all')
     {
         $this->filterTypes = array_merge($this->filterTypes, [$type]);
 
-        if(in_array('all', $this->filterTypes)) {
+        if (in_array('all', $this->filterTypes)) {
             $this->filterTypes = array_where($this->filterTypes, function ($value, $key) {
                 return $value !== 'all';
             });
         }
         return $this;
-    }      
-
-    /**
-      * Restrict result to denied only
-      *
-      * @return this
-      *-----------------------------------------------------------------------*/
-    protected function processPreCheckpostIds()
-    {
-       $this->processPreCheckPost = true;
-       return $this;
-    }    
-
-    /**
-      * Restrict result to denied only
-      *
-      * @return this
-      *-----------------------------------------------------------------------*/
-    public function takeDenied()
-    {
-       return $this->setFilterTypes('denied');
     }
 
     /**
-      * Restrict result to public routes take
-      *
-      * @return this
-      *-----------------------------------------------------------------------*/
+     * Restrict result to denied only
+     *
+     * @return this
+     *-----------------------------------------------------------------------*/
+    protected function processPreCheckpostIds()
+    {
+        $this->processPreCheckPost = true;
+        return $this;
+    }
+
+    /**
+     * Restrict result to denied only
+     *
+     * @return this
+     *-----------------------------------------------------------------------*/
+    public function takeDenied()
+    {
+        return $this->setFilterTypes('denied');
+    }
+
+    /**
+     * Restrict result to public routes take
+     *
+     * @return this
+     *-----------------------------------------------------------------------*/
     public function takePublic()
     {
         return $this->setFilterTypes('public');
-    }                 
+    }
 
     /**
-      * Restrict result to available take
-      *
-      * @return this
-      *-----------------------------------------------------------------------*/
+     * Restrict result to available take
+     *
+     * @return this
+     *-----------------------------------------------------------------------*/
     public function takeAllowed()
     {
-         return $this->setFilterTypes('allowed');
-    }       
+        return $this->setFilterTypes('allowed');
+    }
 
     /**
-      * Choose items to checks from available $this->checkLevels
-      *
-      * @param array/string $levels
-      *
-      * @return this
-      *-----------------------------------------------------------------------*/
+     * Choose items to checks from available $this->checkLevels
+     *
+     * @param array/string $levels
+     *
+     * @return this
+     *-----------------------------------------------------------------------*/
     public function checkOnly($levels)
     {
-        if(! is_array($levels)) {
+        if (!is_array($levels)) {
             $levels = [$levels];
         }
 
@@ -383,77 +386,78 @@ class YesAuthority
         $this->checkLevels = array_only($this->checkLevels, $levels);
         $this->levelsModified = true;
 
-        if(empty($this->checkLevels)) {
+        if (empty($this->checkLevels)) {
             throw new Exception('YesAuthority::checkOnly() invalid array parameter'
-                . implode(', ', array_keys($this->checkLevels)). ' are accepted');
+                . implode(', ', array_keys($this->checkLevels)) . ' are accepted');
         }
 
-        $this->requestCheckStringId .= '_co_'. implode('_level_', $levels);
+        $this->requestCheckStringId .= '_co_' . implode('_level_', $levels);
 
         return $this;
     }
 
     /**
-      * Check the permissions except give level keys from $this->checkLevels
-      *
-      * @param array/string  - $levels - level key
-      *
-      * @return this
-      *-----------------------------------------------------------------------*/
+     * Check the permissions except give level keys from $this->checkLevels
+     *
+     * @param array/string  - $levels - level key
+     *
+     * @return this
+     *-----------------------------------------------------------------------*/
 
     public function checkExcept($levels)
     {
-        if(! is_array($levels)) {
+        if (!is_array($levels)) {
             $levels = [$levels];
         }
 
         array_unshift($levels, 'CONFIG_BASE');
 
-        if(empty(array_only($this->checkLevels, $levels))) {
-            throw new Exception('YesAuthority::checkExcept() Invalid array parameter, ' 
-                . implode(', ', array_keys($this->checkLevels)). ' are accepted');
+        if (empty(array_only($this->checkLevels, $levels))) {
+            throw new Exception('YesAuthority::checkExcept() Invalid array parameter, '
+                . implode(', ', array_keys($this->checkLevels)) . ' are accepted');
         }
 
         $this->checkLevels = array_except($this->checkLevels, $levels);
         $this->levelsModified = true;
 
-        $this->requestCheckStringId .= '_ce_'. implode('_level_', $levels);
+        $this->requestCheckStringId .= '_ce_' . implode('_level_', $levels);
 
         return $this;
-    }    
+    }
 
     /**
-      * Check the permissions till the given level
-      *
-      * @param string  - $level - level key
-      *
-      * @return this
-      *-----------------------------------------------------------------------*/
+     * Check the permissions till the given level
+     *
+     * @param string  - $level - level key
+     *
+     * @return this
+     *-----------------------------------------------------------------------*/
     public function checkUpto($level)
     {
-        if(! is_string($level)) {
-            throw new Exception("YesAuthority::checkUpto() - $level - argument should be string");            
+        if (!is_string($level)) {
+            throw new Exception("YesAuthority::checkUpto() - $level - argument should be string");
         }
 
-        if(! array_key_exists($level, $this->checkLevels)) {
-            throw new Exception("YesAuthority::checkUpto() - Invalid key $level, Only "
-                    . implode(', ', array_keys($this->checkLevels)). ' are accepted'
-                );
+        if (!array_key_exists($level, $this->checkLevels)) {
+            throw new Exception(
+                "YesAuthority::checkUpto() - Invalid key $level, Only "
+                    . implode(', ', array_keys($this->checkLevels)) . ' are accepted'
+            );
         }
 
         $this->checkLevel = $this->checkLevels[$level];
         $this->levelsModified = 'upto';
 
-        $this->requestCheckStringId .= '_cu_level_'. $level;
+        $this->requestCheckStringId .= '_cu_level_' . $level;
 
         return $this;
-    } 
+    }
 
     /**
-      * Check the permissions based on Role Id instead of user id
-      *
-      * @return this
-      *-----------------------------------------------------------------------*/
+     * Check the permissions based on Role Id instead of user id
+     *
+     * @return this
+     *-----------------------------------------------------------------------*/
     public function viaRole()
     {
         $this->accessScope = 'role';
@@ -461,7 +465,7 @@ class YesAuthority
         $this->requestCheckStringId .= '_vr';
 
         return $this;
-    }      
+    }
 
     /**
      * This method use to check permissions
@@ -473,23 +477,23 @@ class YesAuthority
      * @return mixed
      *---------------------------------------------------------------- */
     public function check($accessIdKey = null, $requestForUserId = null, array $options = [])
-    {  
+    {
         $this->isAccessIdsArray = false;
         $options = array_merge([
             'internal_details' => $this->accessDetailsRequested,
             'configure' => true,
             'isAccessIdsArray' => false
-            ], $options);
+        ], $options);
 
         $isAccess   = false;
 
         $accessDetailsRequired = $options['internal_details'];
 
-        if($options['configure'] === null or $options['configure'] === true) {
+        if ($options['configure'] === null or $options['configure'] === true) {
             $this->configure($requestForUserId, $options);
         }
         // if multiple access id/keys
-        if(is_array($accessIdKey)) {
+        if (is_array($accessIdKey)) {
 
             $accessResultArray = [];
             // remove duplicates
@@ -501,8 +505,8 @@ class YesAuthority
             // check each key for the access
             foreach ($accessIdKey as $accessIdKeyItem) {
                 $accessResultArray[$accessIdKeyItem] = $this->check(
-                    $accessIdKeyItem, 
-                    $requestForUserId, 
+                    $accessIdKeyItem,
+                    $requestForUserId,
                     $options
                 );
             }
@@ -515,28 +519,28 @@ class YesAuthority
 
         $this->uniqueIdKeyString = $this->generateUniqueIdKeyString($accessIdKey, $requestForUserId, $options);
 
-        // try to retrive already checked item 
+        // try to retrieve already checked item 
         $existingUniqueIdItem = array_get(
             $this->accessResultContainer,
-            $this->uniqueIdKeyString, 
+            $this->uniqueIdKeyString,
             null
         );
         // if found return that same
-        if($existingUniqueIdItem) {
+        if ($existingUniqueIdItem) {
             return $existingUniqueIdItem['result'];
         }
 
         // check if user is logged in
         if (($this->userIdentified === false)) {
 
-            if($accessDetailsRequired === true) {
+            if ($accessDetailsRequired === true) {
 
                 $result = $this->detailsFormat(false, $accessIdKey, [
-                        'response_code' => 403,
-                        'message' => 'Forbidden - Authentication Required'
-                    ]);
+                    'response_code' => 403,
+                    'message' => 'Forbidden - Authentication Required'
+                ]);
 
-                if($this->isDirectChecked === true) {
+                if ($this->isDirectChecked === true) {
                     $this->initialize();
                 }
 
@@ -547,31 +551,31 @@ class YesAuthority
         }
 
         // if accessKeyId not set then route name will be used as access id key
-        if(!$accessIdKey) {
+        if (!$accessIdKey) {
             $accessIdKey = $this->currentRouteAccessId;
         }
         // accessIdKey should be there
-        if(!$accessIdKey) {
-            throw new Exception('YesAuthority - AccessIdKey/RouteName is missing');            
+        if (!$accessIdKey) {
+            throw new Exception('YesAuthority - AccessIdKey/RouteName is missing');
         }
-        
-       if(isEmpty($this->permissions) and is_array($this->permissions) === false) {
 
-            if($this->isDirectChecked === true) {
+        if (isEmpty($this->permissions) and is_array($this->permissions) === false) {
+
+            if ($this->isDirectChecked === true) {
                 $this->initialize();
             }
 
             return $this->processResult($accessIdKey, $requestForUserId, true, $options);
         }
 
-        if(! is_string($accessIdKey)) {
-            throw new Exception('YesAuthority - Invalid AccessIdKey parameter for check');            
+        if (!is_string($accessIdKey)) {
+            throw new Exception('YesAuthority - Invalid AccessIdKey parameter for check');
         }
 
-        // allow if the access id allowed defaultly 
-        if(in_array($accessIdKey, $this->defaultAllowedAccessIds) === true) {
+        // allow if the access id allowed default
+        if (in_array($accessIdKey, $this->defaultAllowedAccessIds) === true) {
 
-            if($accessDetailsRequired === true) {
+            if ($accessDetailsRequired === true) {
                 $result = $this->detailsFormat(true, $accessIdKey, [
                     'override_result_by' => 'DEFAULT_ALLOWED'
                 ]);
@@ -581,13 +585,13 @@ class YesAuthority
         }
 
         /*
-            If contains * then you may like to reverse test 
+            If contains * then you may like to reverse test
         */
-        if(($this->isDirectChecked === true) and (str_contains($accessIdKey, '*'))) {
+        if (($this->isDirectChecked === true) and (str_contains($accessIdKey, '*'))) {
 
             $wildCardResult = $this->checkWildCard($accessIdKey, $requestForUserId, $options);
 
-            if($accessDetailsRequired === true) {
+            if ($accessDetailsRequired === true) {
 
                 $result = $this->detailsFormat($wildCardResult, $accessIdKey);
 
@@ -596,14 +600,16 @@ class YesAuthority
 
             return $this->processResult($accessIdKey, $requestForUserId, $wildCardResult, $options);
         }
-        
-        if(!isset($this->accessStages[$this->uniqueIdKeyString])) {
+
+        if (!isset($this->accessStages[$this->uniqueIdKeyString])) {
             $this->accessStages[$this->uniqueIdKeyString] = [];
         }
 
-        if(array_get($this->permissions, 'rules.base')) {
-            $isAccess = $this->performChecks($isAccess, $accessIdKey, 
-                array_get($this->permissions, 'rules.base.allow'), 
+        if (array_get($this->permissions, 'rules.base')) {
+            $isAccess = $this->performChecks(
+                $isAccess,
+                $accessIdKey,
+                array_get($this->permissions, 'rules.base.allow'),
                 array_get($this->permissions, 'rules.base.deny'),
                 [
                     'check_level' => 'CONFIG_BASE'
@@ -611,11 +617,13 @@ class YesAuthority
             );
         }
 
-        if($this->performLevelChecks(1)) {
+        if ($this->performLevelChecks(1)) {
             // check for permissions using roles
-            $isAccess = $this->performChecks($isAccess, $accessIdKey, 
-                array_get($this->permissions, 'rules.roles.'.$this->userRoleId.'.allow'), 
-                array_get($this->permissions, 'rules.roles.'.$this->userRoleId.'.deny'),
+            $isAccess = $this->performChecks(
+                $isAccess,
+                $accessIdKey,
+                array_get($this->permissions, 'rules.roles.' . $this->userRoleId . '.allow'),
+                array_get($this->permissions, 'rules.roles.' . $this->userRoleId . '.deny'),
                 [
                     'check_level' => 'CONFIG_ROLE'
                 ]
@@ -623,11 +631,13 @@ class YesAuthority
         }
 
 
-        if($this->performLevelChecks(2)) {
+        if ($this->performLevelChecks(2)) {
             // check for permissions using user permissions
-            $isAccess = $this->performChecks($isAccess, $accessIdKey, 
-                array_get($this->permissions, 'rules.users.'.$this->userId.'.allow'), 
-                array_get($this->permissions, 'rules.users.'.$this->userId.'.deny'),
+            $isAccess = $this->performChecks(
+                $isAccess,
+                $accessIdKey,
+                array_get($this->permissions, 'rules.users.' . $this->userId . '.allow'),
+                array_get($this->permissions, 'rules.users.' . $this->userId . '.deny'),
                 [
                     'check_level' => 'CONFIG_USER'
                 ]
@@ -635,108 +645,122 @@ class YesAuthority
         }
 
         // Process Dynamic Permissions - 07 JUL 2017 - proposed for removal
-       // $this->processDynamicPermissions($accessIdKey);  
+        // $this->processDynamicPermissions($accessIdKey);
 
-       if($this->performLevelChecks(3)) {
-            if($this->userRolePermissions and !empty($this->userRolePermissions)) {
-                 // check for permissions using user custom permissions
-                $isAccess = $this->performChecks($isAccess, $accessIdKey, 
-                    array_get($this->userRolePermissions, 'allow'), 
+        if ($this->performLevelChecks(3)) {
+            if ($this->userRolePermissions and !empty($this->userRolePermissions)) {
+                // check for permissions using user custom permissions
+                $isAccess = $this->performChecks(
+                    $isAccess,
+                    $accessIdKey,
+                    array_get($this->userRolePermissions, 'allow'),
                     array_get($this->userRolePermissions, 'deny'),
                     [
                         'check_level' => 'DB_ROLE'
                     ]
                 );
             }
-       }    
-    
-       if($this->performLevelChecks(4)) {
-            if($this->userPermissions and !empty($this->userPermissions)) {
-                 // check for permissions using user custom permissions
-                $isAccess = $this->performChecks($isAccess, $accessIdKey, 
-                    array_get($this->userPermissions, 'allow'), 
+        }
+
+        if ($this->performLevelChecks(4)) {
+            if ($this->userPermissions and !empty($this->userPermissions)) {
+                // check for permissions using user custom permissions
+                $isAccess = $this->performChecks(
+                    $isAccess,
+                    $accessIdKey,
+                    array_get($this->userPermissions, 'allow'),
                     array_get($this->userPermissions, 'deny'),
                     [
                         'check_level' => 'DB_USER'
                     ]
                 );
             }
-       }
+        }
 
         // if access is denied check if item has dependents which may allowed through
-        if($isAccess === false and $this->dependentsAccessIds 
-            and array_key_exists($accessIdKey, $this->dependentsAccessIds)) {
+        if (
+            $isAccess === false and $this->dependentsAccessIds
+            and array_key_exists($accessIdKey, $this->dependentsAccessIds)
+        ) {
 
             $dependents = $this->dependentsAccessIds[$accessIdKey];
 
-            if(isEmpty($dependents) === false) {
+            if (isEmpty($dependents) === false) {
 
                 foreach ($dependents as $dependent) {
-                    
-                    if($this->performLevelChecks(1)) {                
+
+                    if ($this->performLevelChecks(1)) {
                         // check for permissions using roles
-                        $isAccess = $this->performChecks($isAccess, $dependent, 
-                            array_get($this->permissions, 'rules.roles.'.$this->userRoleId.'.allow'), 
-                            array_get($this->permissions, 'rules.roles.'.$this->userRoleId.'.deny'),
+                        $isAccess = $this->performChecks(
+                            $isAccess,
+                            $dependent,
+                            array_get($this->permissions, 'rules.roles.' . $this->userRoleId . '.allow'),
+                            array_get($this->permissions, 'rules.roles.' . $this->userRoleId . '.deny'),
                             [
                                 'check_level' => 'CONFIG_ROLE'
                             ]
                         );
                     }
-                    
-                    if($this->performLevelChecks(2)) {
+
+                    if ($this->performLevelChecks(2)) {
                         // check for permissions using user permissions
-                        $isAccess = $this->performChecks($isAccess, $dependent, 
-                            array_get($this->permissions, 'rules.users.'.$this->userId.'.allow'), 
-                            array_get($this->permissions, 'rules.users.'.$this->userId.'.deny'),
+                        $isAccess = $this->performChecks(
+                            $isAccess,
+                            $dependent,
+                            array_get($this->permissions, 'rules.users.' . $this->userId . '.allow'),
+                            array_get($this->permissions, 'rules.users.' . $this->userId . '.deny'),
                             [
                                 'check_level' => 'CONFIG_USER'
                             ]
                         );
                     }
 
-                    if($this->performLevelChecks(3)) {
-                        if($this->userRolePermissions and !empty($this->userRolePermissions)) {
+                    if ($this->performLevelChecks(3)) {
+                        if ($this->userRolePermissions and !empty($this->userRolePermissions)) {
                             // check for permissions using user permissions
-                            $isAccess = $this->performChecks($isAccess, $dependent, 
-                                array_get($this->userRolePermissions, 'allow'), 
+                            $isAccess = $this->performChecks(
+                                $isAccess,
+                                $dependent,
+                                array_get($this->userRolePermissions, 'allow'),
                                 array_get($this->userRolePermissions, 'deny'),
                                 [
                                     'check_level' => 'DB_ROLE'
                                 ]
-                            );                        
+                            );
                         }
                     }
 
-                    if($this->performLevelChecks(4)) {
-                        if($this->userPermissions and !empty($this->userPermissions)) {
+                    if ($this->performLevelChecks(4)) {
+                        if ($this->userPermissions and !empty($this->userPermissions)) {
                             // check for permissions using user permissions
-                            $isAccess = $this->performChecks($isAccess, $dependent, 
-                                array_get($this->userPermissions, 'allow'), 
+                            $isAccess = $this->performChecks(
+                                $isAccess,
+                                $dependent,
+                                array_get($this->userPermissions, 'allow'),
                                 array_get($this->userPermissions, 'deny'),
                                 [
                                     'check_level' => 'DB_USER'
                                 ]
-                            );                        
+                            );
                         }
                     }
 
                     // if access permitted not need to iterate further
-                    if($isAccess === true) {
+                    if ($isAccess === true) {
                         break;
                     }
-
                 }
             }
-
         }
 
-        if($this->performLevelChecks(5)) {
-            if($this->configEntity)  {
-                if($this->entityPermissions and !empty($this->entityPermissions)) {
-                     // check for permissions using custom entities permissions
-                    $isAccess = $this->performChecks($isAccess, $accessIdKey, 
-                        array_get($this->entityPermissions, 'allow'), 
+        if ($this->performLevelChecks(5)) {
+            if ($this->configEntity) {
+                if ($this->entityPermissions and !empty($this->entityPermissions)) {
+                    // check for permissions using custom entities permissions
+                    $isAccess = $this->performChecks(
+                        $isAccess,
+                        $accessIdKey,
+                        array_get($this->entityPermissions, 'allow'),
                         array_get($this->entityPermissions, 'deny'),
                         [
                             'check_level' => 'DB_ENTITY'
@@ -745,16 +769,16 @@ class YesAuthority
                 }
 
                 $entityCondition = array_get($this->configEntity, 'condition');
-                if($this->performLevelChecks(6) and $entityCondition and is_callable($entityCondition)) {
+                if ($this->performLevelChecks(6) and $entityCondition and is_callable($entityCondition)) {
                     $entityConditionIsAccess = $entityCondition(
-                        $accessIdKey, 
-                        $isAccess, 
-                        $this->currentRouteAccessId, 
+                        $accessIdKey,
+                        $isAccess,
+                        $this->currentRouteAccessId,
                         $this->entityIdentified,
                         $this->userIdentified
                     );
 
-                    if((is_bool($entityConditionIsAccess) === true)) {
+                    if ((is_bool($entityConditionIsAccess) === true)) {
                         $this->accessStages[$this->uniqueIdKeyString]['__result'] = 'ENTITY_CONDITION';
                         $isAccess = $this->accessStages[$this->uniqueIdKeyString]['ENTITY_CONDITION'] = $entityConditionIsAccess;
                     }
@@ -762,12 +786,12 @@ class YesAuthority
             }
         }
 
-        if($this->performLevelChecks(7)) {
-            // dynamic conditions if any 
+        if ($this->performLevelChecks(7)) {
+            // dynamic conditions if any
             $conditionItems = array_get($this->permissions, 'rules.conditions');
             $index = 0;
 
-            if(isEmpty($conditionItems) === false and is_array($conditionItems)) {
+            if (isEmpty($conditionItems) === false and is_array($conditionItems)) {
                 // check for declared conditionItems
                 foreach ($conditionItems as $conditionItem) {
                     // get the access ids and condition
@@ -779,92 +803,92 @@ class YesAuthority
                     $index++;
 
                     // check if it exists
-                    if((isEmpty($conditionAccessIds) === false)) {
+                    if ((isEmpty($conditionAccessIds) === false)) {
 
                         $isMatchFound = false;
-                         // check of each access id
+                        // check of each access id
                         foreach ($conditionAccessIds as $conditionAccessId) {
                             // check for match
-                            if(str_is($this->cleanIdKey($conditionAccessId), 
-                                $accessIdKey)) {
+                            if (str_is(
+                                $this->cleanIdKey($conditionAccessId),
+                                $accessIdKey
+                            )) {
                                 $isMatchFound = true;
                                 break;
                             }
-                        } 
-                        
-                        $isConditionalAccess = $isAccess;     
+                        }
 
-                       // if match found
-                       if(($isMatchFound === true) and $uses and is_string($uses)) {   
+                        $isConditionalAccess = $isAccess;
+
+                        // if match found
+                        if (($isMatchFound === true) and $uses and is_string($uses)) {
 
                             $uses = explode('@', $uses);
-                            if(count($uses) !== 2) {
-                                throw new Exception('YesAuthority invalid condition class configurations');                            
+                            if (count($uses) !== 2) {
+                                throw new Exception('YesAuthority invalid condition class configurations');
                             }
 
-                            if(! class_exists($uses[0]) or ! method_exists($uses[0], $uses[1])) {
+                            if (!class_exists($uses[0]) or !method_exists($uses[0], $uses[1])) {
                                 throw new Exception('YesAuthority invalid condition class or method configurations');
                             }
 
                             $executeCondition = new $uses[0]();
-                            $isConditionalAccess = $executeCondition->$uses[1]($accessIdKey, $isAccess, $this->currentRouteAccessId);    
-                       
-                        } elseif(($isMatchFound === true) and $uses and is_callable($uses)) {                        
-                            $isConditionalAccess = $uses($accessIdKey, $isAccess, $this->currentRouteAccessId);                           
-                       } 
+                            $isConditionalAccess = $executeCondition->$uses[1]($accessIdKey, $isAccess, $this->currentRouteAccessId);
+                        } elseif (($isMatchFound === true) and $uses and is_callable($uses)) {
+                            $isConditionalAccess = $uses($accessIdKey, $isAccess, $this->currentRouteAccessId);
+                        }
 
-                        // expect boolean 
-                        if(($isMatchFound === true) and $uses and (is_bool($isConditionalAccess) === true)) {   
+                        // expect boolean
+                        if (($isMatchFound === true) and $uses and (is_bool($isConditionalAccess) === true)) {
 
-                            if(! isset($this->accessStages[$this->uniqueIdKeyString]['__conditions'])) {
+                            if (!isset($this->accessStages[$this->uniqueIdKeyString]['__conditions'])) {
                                 $this->accessStages[$this->uniqueIdKeyString]['__conditions'] = [];
                             }
 
                             $this->accessStages[$this->uniqueIdKeyString]['__result'] = 'CONDITIONS';
-                            $name = (array_key_exists($name, $this->accessStages[$this->uniqueIdKeyString]['__conditions'])) 
-                                        ? $name.'_'.$index : $name;
+                            $name = (array_key_exists($name, $this->accessStages[$this->uniqueIdKeyString]['__conditions']))
+                                ? $name . '_' . $index : $name;
 
                             $this->accessStages[$this->uniqueIdKeyString]['__conditions']['__result'] = $name;
                             $this->accessStages[$this->uniqueIdKeyString]['__conditions'][$name] = $isConditionalAccess;
 
                             $isAccess = $this->accessStages[$this->uniqueIdKeyString]['CONDITIONS'] = $isConditionalAccess;
                         }
-
                     }
                 }
             }
         }
 
-       if($isAccess === true) {
+        if ($isAccess === true) {
 
-            if($accessDetailsRequired === true) {
+            if ($accessDetailsRequired === true) {
 
                 $result =  $this->detailsFormat(true, $accessIdKey);
 
-                if($this->isDirectChecked === true) {
+                if ($this->isDirectChecked === true) {
                     $this->initialize();
                 }
 
                 return $this->processResult($accessIdKey, $requestForUserId, $result, $options);
             }
 
-            if($this->isDirectChecked === true) {
+            if ($this->isDirectChecked === true) {
                 $this->initialize();
-            }            
+            }
 
             return $this->processResult($accessIdKey, $requestForUserId, true, $options);
         }
 
         $result = $this->detailsFormat(false, $accessIdKey);
 
-        if(! $accessDetailsRequired) {
+        if (!$accessDetailsRequired) {
             return $this->processResult($accessIdKey, $requestForUserId, false, $options);
         }
 
-        if($this->isDirectChecked === true) {
+        if ($this->isDirectChecked === true) {
             $this->initialize();
         }
-        
+
         return $this->processResult($accessIdKey, $requestForUserId, $result, $options);
     }
 
@@ -878,22 +902,20 @@ class YesAuthority
      * @return mixed
      *---------------------------------------------------------------- */
     protected function processResult($accessIdKey, $requestForUserId, $accessIdKeyResult, $options = [])
-    {  
-       // store the result for later use.
-       if(is_string($accessIdKey)) {
+    {
+        // store the result for later use.
+        if (is_string($accessIdKey)) {
 
-        $this->accessResultContainer[
-                $this->uniqueIdKeyString
-            ] = [
-            'access_id_key' => $accessIdKey,
-            'result' => $accessIdKeyResult,
-        ];
-       }
-       if($options['isAccessIdsArray'] == false) {
+            $this->accessResultContainer[$this->uniqueIdKeyString] = [
+                'access_id_key' => $accessIdKey,
+                'result' => $accessIdKeyResult,
+            ];
+        }
+        if ($options['isAccessIdsArray'] == false) {
             // reset the requestCheckStringId
             $this->requestCheckStringId = '';
-       }
-       // let return the actual result
+        }
+        // let return the actual result
         return $accessIdKeyResult;
     }
 
@@ -906,23 +928,23 @@ class YesAuthority
      * @return mixed
      *---------------------------------------------------------------- */
     protected function generateUniqueIdKeyString($accessIdKey, $requestForUserId, $options = [])
-    {  
-       return strtolower(str_replace('.', '_', $accessIdKey)
-                    . '_'
-                    . (($options['internal_details']) ? '_ird_' : '')
-                    .($requestForUserId ?: $this->userId)
-                    . $this->requestCheckStringId);
-    }    
+    {
+        return strtolower(str_replace('.', '_', $accessIdKey)
+            . '_'
+            . (($options['internal_details']) ? '_ird_' : '')
+            . ($requestForUserId ?: $this->userId)
+            . $this->requestCheckStringId);
+    }
 
-/**
+    /**
      * Get Access Result log result
      *
      * @return mixed
      *---------------------------------------------------------------- */
     public function accessResultLog()
-    {  
-       return $this->accessResultContainer;
-    }    
+    {
+        return $this->accessResultContainer;
+    }
 
     /**
      * Check if route is allowed or not
@@ -933,17 +955,17 @@ class YesAuthority
      * @return mixed
      *---------------------------------------------------------------- */
     protected function checkWildCard($accessIdKey = null, $requestForUserId = null, array $options = [])
-    {   
+    {
         $options = array_merge($options, [
-                'ignore_details' => true,
-                'internal_details' => true,
-                'configure' => true
-            ]);
+            'ignore_details' => true,
+            'internal_details' => true,
+            'configure' => true
+        ]);
 
         $availableRoutes = $this->availableRoutes(false, $requestForUserId, $options);
 
         foreach ($availableRoutes as $route) {
-            if(str_is($this->cleanIdKey($accessIdKey), $route) === true) {
+            if (str_is($this->cleanIdKey($accessIdKey), $route) === true) {
                 return true;
             }
         }
@@ -960,46 +982,45 @@ class YesAuthority
      * @return mixed
      *---------------------------------------------------------------- */
     protected function isRouteAvailable($routeName, $middleware, $requestForUserId = null, array $options = [])
-    {   
+    {
         $options = array_merge([
             'internal_details' => $this->accessDetailsRequested,
-             'configure' => true
-            ], $options);
+            'configure' => true
+        ], $options);
 
-        if(in_array($this->middlewareName, $middleware)) {
+        if (in_array($this->middlewareName, $middleware)) {
             $getResult = $this->check($routeName, $requestForUserId, $options);
 
-            if($options['internal_details'] === true) {
+            if ($options['internal_details'] === true) {
                 return $getResult;
             }
 
             return  $getResult === true ?: false;
         }
         // Filter guest only routes
-        if(in_array($this->preCheckpostMiddlewareName, $middleware)) {
+        if (in_array($this->preCheckpostMiddlewareName, $middleware)) {
 
-            if($this->userIdentified) {
+            if ($this->userIdentified) {
 
                 $this->guestOnlyRoutes[] = $routeName;
-                
-                if($options['internal_details'] === true) {
+
+                if ($options['internal_details'] === true) {
 
                     return $this->detailsFormat(false, $routeName, [
-                            'is_public' => true,
-                        ]);
+                        'is_public' => true,
+                    ]);
                 }
-                
-                return false;
 
+                return false;
             } else {
-                
-                if($options['internal_details'] === true) {
+
+                if ($options['internal_details'] === true) {
 
                     return $this->detailsFormat(true, $routeName, [
-                            'is_public' => true,
-                        ]);
+                        'is_public' => true,
+                    ]);
                 }
-                
+
                 return true;
             }
         }
@@ -1007,14 +1028,14 @@ class YesAuthority
         // set as public route
         $this->publicRoutes[] = $routeName;
 
-        if($options['internal_details'] === true) {
+        if ($options['internal_details'] === true) {
 
             return $this->detailsFormat(true, $routeName, [
-                    'is_public' => true,
-                ]);
+                'is_public' => true,
+            ]);
         }
 
-        return true;        
+        return true;
     }
 
     /**
@@ -1036,12 +1057,12 @@ class YesAuthority
 
         $allowedPseudoAccessIds = [];
         foreach ($this->pseudoAccessIds as $pseudoAccessId) {
-            if($this->check($pseudoAccessId, $requestForUserId, $options) === true) {
+            if ($this->check($pseudoAccessId, $requestForUserId, $options) === true) {
                 $allowedPseudoAccessIds[] = $pseudoAccessId;
             }
         }
 
-       return array_merge($allowedPseudoAccessIds, $routes);
+        return array_merge($allowedPseudoAccessIds, $routes);
     }
 
     /**
@@ -1072,10 +1093,10 @@ class YesAuthority
     public function getRoutes($isUriRequired = false, $requestForUserId = null, array $options = [])
     {
         $options = array_merge([
-                'ignore_details' => false,
-                'internal_details' => true,
-                'configure' => false
-            ], $options);
+            'ignore_details' => false,
+            'internal_details' => true,
+            'configure' => false
+        ], $options);
 
         // get all application routes.
         $routeCollection = Route::getRoutes();
@@ -1091,75 +1112,71 @@ class YesAuthority
             foreach ($routeCollection as $route) {
                 $routeName = $route->getName();
 
-                if($routeName) {
+                if ($routeName) {
 
                     $getResult = $this->isRouteAvailable($routeName, $route->middleware(), $requestForUserId, $options);
 
-                    if(($this->accessDetailsRequested === true) and ($options['ignore_details'] === false)) {
+                    if (($this->accessDetailsRequested === true) and ($options['ignore_details'] === false)) {
 
-                        if(($getResult->isAccess() === true) and ($getResult->isPublic() === false) and (array_intersect($this->filterTypes, ['all', 'allowed']))) {
-                            
-                            $routes[] = $this->detailsFormat($getResult, $routeName, [
-                                    'uri' => $route->uri()
-                                ]);
-                        } elseif(($getResult->isAccess() === true) and ($getResult->isPublic() === true) and (array_intersect($this->filterTypes, ['all', 'public']))) {
-                            
-                            $routes[] = $this->detailsFormat($getResult, $routeName, [
-                                    'uri' => $route->uri()
-                                ]);
-                        } elseif(($getResult->isAccess() === false) and (array_intersect($this->filterTypes, ['all', 'denied']))) {
-                            
-                            $routes[] = $this->detailsFormat($getResult, $routeName, [
-                                    'uri' => $route->uri()
-                                ]);
-                        } 
+                        if (($getResult->isAccess() === true) and ($getResult->isPublic() === false) and (array_intersect($this->filterTypes, ['all', 'allowed']))) {
 
+                            $routes[] = $this->detailsFormat($getResult, $routeName, [
+                                'uri' => $route->uri()
+                            ]);
+                        } elseif (($getResult->isAccess() === true) and ($getResult->isPublic() === true) and (array_intersect($this->filterTypes, ['all', 'public']))) {
+
+                            $routes[] = $this->detailsFormat($getResult, $routeName, [
+                                'uri' => $route->uri()
+                            ]);
+                        } elseif (($getResult->isAccess() === false) and (array_intersect($this->filterTypes, ['all', 'denied']))) {
+
+                            $routes[] = $this->detailsFormat($getResult, $routeName, [
+                                'uri' => $route->uri()
+                            ]);
+                        }
                     } else {
 
-                        if(($getResult->isAccess() === true) and ($getResult->isPublic() === false) and (array_intersect($this->filterTypes, ['all', 'allowed']))) {
-                                
-                            if($isUriRequired) {
+                        if (($getResult->isAccess() === true) and ($getResult->isPublic() === false) and (array_intersect($this->filterTypes, ['all', 'allowed']))) {
+
+                            if ($isUriRequired) {
                                 $routes[$routeName] = $route->uri();
                             } else {
                                 $routes[] = $routeName;
                             }
-                            
-                        } elseif(($getResult->isAccess() === true) and ($getResult->isPublic() === true) and (array_intersect($this->filterTypes, ['all', 'public']))) {
-                            
-                            if($isUriRequired) {
+                        } elseif (($getResult->isAccess() === true) and ($getResult->isPublic() === true) and (array_intersect($this->filterTypes, ['all', 'public']))) {
+
+                            if ($isUriRequired) {
                                 $routes[$routeName] = $route->uri();
                             } else {
                                 $routes[] = $routeName;
                             }
-                            
-                        } elseif(($getResult->isAccess() === false) and (array_intersect($this->filterTypes, ['all', 'denied']))) {
-                            
-                            if($isUriRequired) {
+                        } elseif (($getResult->isAccess() === false) and (array_intersect($this->filterTypes, ['all', 'denied']))) {
+
+                            if ($isUriRequired) {
                                 $routes[$routeName] = $route->uri();
                             } else {
                                 $routes[] = $routeName;
                             }
                         }
-                    }           
-                } 
+                    }
+                }
             }
         }
 
         unset($routeCollection);
 
         $this->initialize();
-        
+
         // check if pre check post needed or not
-        if($this->processPreCheckPost === true) {
-            if($isUriRequired) {
+        if ($this->processPreCheckPost === true) {
+            if ($isUriRequired) {
                 return array_diff_key($routes, array_flip($this->guestOnlyRoutes));
             } else {
                 return array_diff($routes, $this->guestOnlyRoutes);
             }
-            
         }
 
-        return $routes;      
+        return $routes;
     }
 
     /**
@@ -1196,65 +1213,60 @@ class YesAuthority
 
         $this->configure($requestForUserId, $options);
 
-        if(isEmpty($this->dynamicAccessZones) === false) {            
+        if (isEmpty($this->dynamicAccessZones) === false) {
 
-            foreach ($this->dynamicAccessZones as $accessZone => $accessZoneContents) {                
-                
+            foreach ($this->dynamicAccessZones as $accessZone => $accessZoneContents) {
+
                 $getResult = $this->check($accessZone, $requestForUserId, $options);
 
-                if($this->accessDetailsRequested === true) {
+                if ($this->accessDetailsRequested === true) {
 
-                        if(($getResult->isAccess() === true) and ($getResult->isPublic() === false) and (array_intersect($this->filterTypes, ['all', 'allowed']))) {
-                            
-                            $availableZones[] = $this->detailsFormat($getResult, $accessZone, [
-                                'title' => array_get($accessZoneContents, 'title'),
-                                'is_zone' => true,                                
-                                'dependencies' => array_get($accessZoneContents, 'dependencies'),
-                                'parent' => array_get($accessZoneContents, 'parent'),
-                                'description' => array_get($accessZoneContents, 'description'),
-                            ]);
+                    if (($getResult->isAccess() === true) and ($getResult->isPublic() === false) and (array_intersect($this->filterTypes, ['all', 'allowed']))) {
 
-                        } elseif(($getResult->isAccess() === true) and ($getResult->isPublic() === true) and (array_intersect($this->filterTypes, ['all', 'public']))) {
-                            
-                            $availableZones[] = $this->detailsFormat($getResult, $accessZone, [
-                                'title' => array_get($accessZoneContents, 'title'),
-                                'is_zone' => true,
-                                'dependencies' => array_get($accessZoneContents, 'dependencies'),
-                                'parent' => array_get($accessZoneContents, 'parent'),
-                                 'description' => array_get($accessZoneContents, 'description'),
-                            ]);
+                        $availableZones[] = $this->detailsFormat($getResult, $accessZone, [
+                            'title' => array_get($accessZoneContents, 'title'),
+                            'is_zone' => true,
+                            'dependencies' => array_get($accessZoneContents, 'dependencies'),
+                            'parent' => array_get($accessZoneContents, 'parent'),
+                            'description' => array_get($accessZoneContents, 'description'),
+                        ]);
+                    } elseif (($getResult->isAccess() === true) and ($getResult->isPublic() === true) and (array_intersect($this->filterTypes, ['all', 'public']))) {
 
-                        } elseif(($getResult->isAccess() === false) and (array_intersect($this->filterTypes, ['all', 'denied']))) {
-                            
-                            $availableZones[] = $this->detailsFormat($getResult, $accessZone, [
-                                'title' => array_get($accessZoneContents, 'title'),
-                                'is_zone' => true,
-                                'dependencies' => array_get($accessZoneContents, 'dependencies'),
-                                'parent' => array_get($accessZoneContents, 'parent'),
-                                'description' => array_get($accessZoneContents, 'description'),
-                            ]);
-                        } 
+                        $availableZones[] = $this->detailsFormat($getResult, $accessZone, [
+                            'title' => array_get($accessZoneContents, 'title'),
+                            'is_zone' => true,
+                            'dependencies' => array_get($accessZoneContents, 'dependencies'),
+                            'parent' => array_get($accessZoneContents, 'parent'),
+                            'description' => array_get($accessZoneContents, 'description'),
+                        ]);
+                    } elseif (($getResult->isAccess() === false) and (array_intersect($this->filterTypes, ['all', 'denied']))) {
 
-                    } else {
+                        $availableZones[] = $this->detailsFormat($getResult, $accessZone, [
+                            'title' => array_get($accessZoneContents, 'title'),
+                            'is_zone' => true,
+                            'dependencies' => array_get($accessZoneContents, 'dependencies'),
+                            'parent' => array_get($accessZoneContents, 'parent'),
+                            'description' => array_get($accessZoneContents, 'description'),
+                        ]);
+                    }
+                } else {
 
-                        if(($getResult->isAccess() === true) and ($getResult->isPublic() === false) and (array_intersect($this->filterTypes, ['all', 'allowed']))) {
-                                
-                            $availableZones[] = $accessZone;
-                            
-                        } elseif(($getResult->isAccess() === true) and ($getResult->isPublic() === true) and (array_intersect($this->filterTypes, ['all', 'public']))) {                         
-                            $availableZones[] = $accessZone;
-                            
-                        } elseif(($getResult->isAccess() === false) and (array_intersect($this->filterTypes, ['all', 'denied']))) {            
+                    if (($getResult->isAccess() === true) and ($getResult->isPublic() === false) and (array_intersect($this->filterTypes, ['all', 'allowed']))) {
 
-                            $availableZones[] = $accessZone;
-                        }
-                    }  
+                        $availableZones[] = $accessZone;
+                    } elseif (($getResult->isAccess() === true) and ($getResult->isPublic() === true) and (array_intersect($this->filterTypes, ['all', 'public']))) {
+                        $availableZones[] = $accessZone;
+                    } elseif (($getResult->isAccess() === false) and (array_intersect($this->filterTypes, ['all', 'denied']))) {
+
+                        $availableZones[] = $accessZone;
+                    }
+                }
             }
         }
 
         $this->initialize();
 
-        return $availableZones;      
+        return $availableZones;
     }
 
     /**
@@ -1267,11 +1279,11 @@ class YesAuthority
         // run get routes & collect public routes
         $this->takePublic()->getRoutes();
 
-        if(is_array($routeName)) {
+        if (is_array($routeName)) {
             $confirmedPublicRoutes = [];
-            
+
             foreach ($routeName as $routeItem) {
-                if(in_array($routeName, $this->publicRoutes)) {
+                if (in_array($routeName, $this->publicRoutes)) {
                     $confirmedPublicRoutes[$routeItem] = true;
                 }
             }
@@ -1279,7 +1291,7 @@ class YesAuthority
             return $confirmedPublicRoutes;
         }
 
-        if(!$routeName) {
+        if (!$routeName) {
             $routeName = Route::currentRouteName();
         }
 
@@ -1302,15 +1314,15 @@ class YesAuthority
         $specific = null;
         $decisionStrength = [];
 
-        if(!$accessList or !is_array($accessList)) {
+        if (!$accessList or !is_array($accessList)) {
             $accessList = [];
         }
 
-        if(!$denyList or !is_array($denyList)) {
+        if (!$denyList or !is_array($denyList)) {
             $denyList = [];
         }
 
-        if(isEmpty($this->dynamicAccessZones) === false and (count($accessList) + count($denyList)) > 0) {
+        if (isEmpty($this->dynamicAccessZones) === false and (count($accessList) + count($denyList)) > 0) {
 
             $zoneAllowedAccessIds = [];
             $zoneDeniedAccessIds = [];
@@ -1322,11 +1334,11 @@ class YesAuthority
                 $accessList = $this->collectParentZones($accessZone, $accessList, $accessZone);
                 $denyList = $this->collectParentZones($accessZone, $denyList, $accessZone);
 
-                if(is_array($accessList) and in_array($accessZone, $accessList)) {
+                if (is_array($accessList) and in_array($accessZone, $accessList)) {
                     $zoneAllowedAccessIds = array_merge($zoneAllowedAccessIds, array_get($this->dynamicAccessZones[$accessZone], 'access_ids', []));
                 }
 
-                if(is_array($denyList) and in_array($accessZone, $denyList)) {
+                if (is_array($denyList) and in_array($accessZone, $denyList)) {
                     $zoneDeniedAccessIds = array_merge($zoneDeniedAccessIds, array_get($this->dynamicAccessZones[$accessZone], 'access_ids', []));
                 }
             }
@@ -1336,46 +1348,44 @@ class YesAuthority
         }
 
         // perform allowed check
-        if(isEmpty($accessList) === false and is_array($accessList)) {
+        if (isEmpty($accessList) === false and is_array($accessList)) {
             foreach ($accessList as $accessId) {
 
                 // remove unnecessary wild-cards *
                 $accessId = $this->cleanIdKey($accessId);
 
-                if($accessId === $accessIdKey) {
+                if ($accessId === $accessIdKey) {
                     $specific = 'allow';
                     break;
                 }
 
-                if(str_is($accessId, $accessIdKey) === true) {
+                if (str_is($accessId, $accessIdKey) === true) {
 
                     $decisionStrength[strlen($accessId)] = $isAccess =  true;
-
                 }
             }
         }
 
         //perform deny check
-        if(isEmpty($denyList) === false and is_array($denyList)) {
+        if (isEmpty($denyList) === false and is_array($denyList)) {
             foreach ($denyList as $denyId) {
 
                 // remove unnecessary wild-cards *
                 $denyId = $this->cleanIdKey($denyId);
 
-                if($denyId === $accessIdKey) {
+                if ($denyId === $accessIdKey) {
                     $specific = 'deny';
                     break;
                 }
 
-                if(str_is($denyId, $accessIdKey) === true) {
+                if (str_is($denyId, $accessIdKey) === true) {
 
                     $decisionStrength[strlen($denyId)] = $isAccess =  false;
-
-                }                
+                }
             }
         }
 
-        if(is_array($this->dynamicAccessZones) and array_key_exists($accessIdKey, $this->dynamicAccessZones)) {
+        if (is_array($this->dynamicAccessZones) and array_key_exists($accessIdKey, $this->dynamicAccessZones)) {
             $this->accessStages[$this->uniqueIdKeyString]['__data'] = [
                 'is_zone' => true,
                 'title' => array_get($this->dynamicAccessZones[$accessIdKey], 'title'),
@@ -1384,15 +1394,15 @@ class YesAuthority
                 'description' => array_get($this->dynamicAccessZones[$accessIdKey], 'description'),
             ];
         }
-        
+
         // if it specific item then its important
-        if($specific) {
+        if ($specific) {
             $this->accessStages[$this->uniqueIdKeyString][$options['check_level']] =  ($specific === 'allow') ? true : false;
             $this->accessStages[$this->uniqueIdKeyString]['__result'] = $options['check_level'];
             return $this->accessStages[$this->uniqueIdKeyString][$options['check_level']];
         }
 
-        if(empty($decisionStrength) === false) {
+        if (empty($decisionStrength) === false) {
             $this->accessStages[$this->uniqueIdKeyString]['__result'] = $options['check_level'];
             return $this->accessStages[$this->uniqueIdKeyString][$options['check_level']] =  $decisionStrength[max(array_keys($decisionStrength))];
         }
@@ -1409,23 +1419,23 @@ class YesAuthority
      * 
      * @return array
      *---------------------------------------------------------------- */
-    protected function collectParentZones($accessZone, $allowDenyList, $intialAccessZone) 
-    {  
+    protected function collectParentZones($accessZone, $allowDenyList, $intialAccessZone)
+    {
         // get access zone details
         $accessZoneContents = array_get($this->dynamicAccessZones, $accessZone);
         // name of the parent zone
         $parentZoneName = array_get($accessZoneContents, 'parent');
         // check if the Parent & Self zone are same
-        if($parentZoneName == $accessZone) {
+        if ($parentZoneName == $accessZone) {
             throw new Exception("YesAuthority - Zone's Self Parent Relation - $accessZone");
         }
         // if parent is there
-        if($parentZoneName) {
+        if ($parentZoneName) {
             // grab the same for nested parents
             $allowDenyList = $this->collectParentZones($parentZoneName, $allowDenyList, $intialAccessZone);
             // *** SEQUENCE is IMPORTANT - DO NOT CHANGE ***
             // add item to access/deny list
-            if(is_array($allowDenyList) and in_array($parentZoneName, $allowDenyList)) {
+            if (is_array($allowDenyList) and in_array($parentZoneName, $allowDenyList)) {
                 $allowDenyList[] = $accessZone;
             }
         }
@@ -1440,17 +1450,18 @@ class YesAuthority
      * 
      * @return string
      *---------------------------------------------------------------- */
-    protected function detailsFormat($isAccess, $accessIdKey, $options = []) {
+    protected function detailsFormat($isAccess, $accessIdKey, $options = [])
+    {
 
-        if(!empty($this->accessStages[$this->uniqueIdKeyString])) {
+        if (!empty($this->accessStages[$this->uniqueIdKeyString])) {
             $itemData = array_pull($this->accessStages[$this->uniqueIdKeyString], '__data');
 
-            if(is_array($itemData) and !empty($itemData)) {
+            if (is_array($itemData) and !empty($itemData)) {
                 $options = array_merge($options, $itemData);
             }
         }
 
-        if($isAccess instanceof YesAuthorityResult) {
+        if ($isAccess instanceof YesAuthorityResult) {
 
             foreach ($options as $key => $value) {
                 $isAccess->{$key} = $value;
@@ -1468,29 +1479,29 @@ class YesAuthority
         $conditionsIfAny = [];
         $conditionResult = null;
 
-        $resultBy = ifIsset($this->accessStages[$this->uniqueIdKeyString], function() use (&$accessIdKey, &$conditionsIfAny, &$conditionResult) {
-                        $conditionsIfAny = array_pull($this->accessStages[$this->uniqueIdKeyString], '__conditions');
-                return array_pull($this->accessStages[$this->uniqueIdKeyString], '__result');
-            }, null);
+        $resultBy = ifIsset($this->accessStages[$this->uniqueIdKeyString], function () use (&$accessIdKey, &$conditionsIfAny, &$conditionResult) {
+            $conditionsIfAny = array_pull($this->accessStages[$this->uniqueIdKeyString], '__conditions');
+            return array_pull($this->accessStages[$this->uniqueIdKeyString], '__result');
+        }, null);
 
-        if(! empty($conditionsIfAny)) {
+        if (!empty($conditionsIfAny)) {
             $conditionResult = array_pull($conditionsIfAny, '__result');
-        }        
-        
+        }
+
         $parentLevel = null;
         // find parent level item
-        if($resultBy ) {
+        if ($resultBy) {
             foreach (array_reverse($this->accessStages[$this->uniqueIdKeyString]) as $key => $value) {
                 $levelKeyId = $this->checkLevels[$key];
                 $resultKeyId = $this->checkLevels[$resultBy];
-                if(($levelKeyId < $resultKeyId) and !$parentLevel) {
+                if (($levelKeyId < $resultKeyId) and !$parentLevel) {
                     $parentLevel = $key;
                     break;
-                } 
+                }
             }
         }
 
-        if($options['override_result_by']) {
+        if ($options['override_result_by']) {
             $resultBy = $options['override_result_by'];
         }
 
@@ -1511,12 +1522,12 @@ class YesAuthority
             'parent' => ifIsset($options['parent'], true, null),
             'description' => ifIsset($options['description'], true, null),
         ], [
-           'check_levels' => $this->checkLevels
+            'check_levels' => $this->checkLevels
         ]);
 
         unset($options, $accessIdKey, $isAccess, $this->accessStages, $resultBy, $parentLevel, $conditionsIfAny, $conditionResult);
 
-        return $result;        
+        return $result;
     }
 
     /**
@@ -1526,9 +1537,10 @@ class YesAuthority
      * 
      * @return string
      *---------------------------------------------------------------- */
-    private function initialize() {
+    private function initialize()
+    {
 
-        if($this->isAccessIdsArray == true) {
+        if ($this->isAccessIdsArray == true) {
             return false;
         }
 
@@ -1545,8 +1557,8 @@ class YesAuthority
         ];
 
         $this->customPermissions = false;
-        $this->accessDetailsRequested = false;    
-        $this->accessScope = 'user';    
+        $this->accessDetailsRequested = false;
+        $this->accessScope = 'user';
         $this->isDirectChecked = true;
         $this->levelsModified = false;
         $this->filterTypes = ['all'];
@@ -1571,16 +1583,16 @@ class YesAuthority
     public function checkEntity($entityKey, $entityId, $requestForUserId = null)
     {
         $entities = array_get($this->permissions, 'entities');
-        
-        if(! $entities or isEmpty($entities)) {
+
+        if (!$entities or isEmpty($entities)) {
             throw new Exception('YesAuthority - entities empty. Please check your YesAuthority entities.');
         }
 
         $this->configEntity = array_get($entities, $entityKey);
         $this->userRequestForEntity = $requestForUserId ? $requestForUserId : Auth::id();
 
-        if(! $this->configEntity or isEmpty($this->configEntity)) {
-            throw new Exception('YesAuthority - '. $entityKey .' entity not found. Please check your YesAuthority entities.');
+        if (!$this->configEntity or isEmpty($this->configEntity)) {
+            throw new Exception('YesAuthority - ' . $entityKey . ' entity not found. Please check your YesAuthority entities.');
         }
 
         $entityModelString  = array_get($this->configEntity, 'model');
@@ -1589,25 +1601,27 @@ class YesAuthority
         $userIdColumn       = array_get($this->configEntity, 'user_id_column');
         $whereClouses       = array_get($this->configEntity, 'where', []);
 
-        if(!$entityModelString 
-           // or !$entityIdColumn 
-            or !$permissionColumn 
-            or !$userIdColumn) {
+        if (
+            !$entityModelString
+            // or !$entityIdColumn 
+            or !$permissionColumn
+            or !$userIdColumn
+        ) {
             throw new Exception('YesAuthority - entity config should contain model, permission_column and user_id_column');
         }
 
-        if(! is_string($entityModelString)) {
+        if (!is_string($entityModelString)) {
             throw new Exception('YesAuthority - Please set key for model in entity config');
         }
 
-        if(!class_exists($entityModelString)) {
+        if (!class_exists($entityModelString)) {
             throw new Exception('YesAuthority - Entity model does not exist.');
         }
 
         $this->entityPermissions = [];
 
         // check if entity available as array
-        if(is_array($entityId)) {
+        if (is_array($entityId)) {
             $this->entityIdentified   = $entityId;
         } else {
             $entityModel = new $entityModelString;
@@ -1617,27 +1631,27 @@ class YesAuthority
                 $userIdColumn => $this->userRequestForEntity,
             ], $whereClouses))->first();
 
-            if(isEmpty($entityFound)) {
+            if (isEmpty($entityFound)) {
                 return $this;
             }
             // if entity model found
             $this->entityIdentified   = $entityFound->toArray();
         }
 
-        if(empty($this->entityIdentified)) {
+        if (empty($this->entityIdentified)) {
             return $this;
         }
-        
-        $this->requestCheckStringId .= '_cee_'. $entityKey . '_'. $this->entityIdentified[$entityIdColumn] . '_' . $requestForUserId;
-        
+
+        $this->requestCheckStringId .= '_cee_' . $entityKey . '_' . $this->entityIdentified[$entityIdColumn] . '_' . $requestForUserId;
+
         // get the permissions out of it
         $rawEntityPermissions = array_get($this->entityIdentified, $permissionColumn);
-        
+
         // if permissions found
-        if(isEmpty($rawEntityPermissions) === false) { 
+        if (isEmpty($rawEntityPermissions) === false) {
             // if not an array, make it
-            if(is_array($rawEntityPermissions) === false) {
-                $this->entityPermissions = collect(json_decode($rawEntityPermissions))->toArray();
+            if (is_array($rawEntityPermissions) === false) {
+                $this->entityPermissions = json_decode($rawEntityPermissions, true);
             } else {
                 $this->entityPermissions = $rawEntityPermissions;
             }
@@ -1653,8 +1667,9 @@ class YesAuthority
      * 
      * @return string
      *---------------------------------------------------------------- */
-    protected function cleanIdKey($idKey) {
-         // remove unnecessary wild-cards *
+    protected function cleanIdKey($idKey)
+    {
+        // remove unnecessary wild-cards *
         return preg_replace('/\*+/', '*', $idKey);
     }
 
@@ -1665,30 +1680,31 @@ class YesAuthority
      * 
      * @return bool
      *---------------------------------------------------------------- */
-    protected function performLevelChecks($level = 99) {
+    protected function performLevelChecks($level = 99)
+    {
         return ($this->checkLevel >= $level) and in_array($level, $this->checkLevels);
     }
 
     /**
-      * Extend the permissions from one role to another
-      *
-      * @param int/string $requestedRoleId      
-      * @param int/string $ruleKey        
-      *
-      * @return void
-      *-----------------------------------------------------------------------*/
+     * Extend the permissions from one role to another
+     *
+     * @param int/string $requestedRoleId      
+     * @param int/string $ruleKey        
+     *
+     * @return void
+     *-----------------------------------------------------------------------*/
     protected function extendRolePermissions($requestedRoleId, $ruleKey = null)
-    {   
+    {
         // avoid recursive loop
-        if($requestedRoleId == $ruleKey) {
-            throw new Exception($ruleKey." - invalid extended role id");
+        if ($requestedRoleId == $ruleKey) {
+            throw new Exception($ruleKey . " - invalid extended role id");
         }
         // get available roles info
         $availalbleRoleItems = array_get($this->permissions, 'rules.roles');
         // Get original role item for which permissions are extending
         $originalRoleItem = array_get($availalbleRoleItems, $requestedRoleId);
         // if its not internal query then it may original
-        if(!$ruleKey) {
+        if (!$ruleKey) {
             $ruleKey = $requestedRoleId;
             $ruleValue = &$originalRoleItem;
         } else {
@@ -1696,34 +1712,34 @@ class YesAuthority
             $ruleValue = array_get($availalbleRoleItems, $ruleKey);
         }
         // check if it is extended by other role
-        if(array_has($ruleValue, 'extends') and !empty($ruleValue['extends'])) {
+        if (array_has($ruleValue, 'extends') and !empty($ruleValue['extends'])) {
             // if found handle each permissions.
             foreach ($ruleValue['extends'] as $extendedBy) {
                 try {
                     // access by variable
                     list($roleId, $permissionType) = explode('.', $extendedBy);
                     // avoid recursive loop
-                    if($ruleKey == $roleId) {
+                    if ($ruleKey == $roleId) {
                         throw new Exception('invalid:same');
                     }
                 } catch (Exception $e) {
                     throw new Exception(
                         $e->getMessage() == 'invalid:same' ?
-                            $roleId." - invalid extended role id"
-                                : $extendedBy." - is invalid extended permissions, it should be like 1.allow"
+                            $roleId . " - invalid extended role id"
+                            : $extendedBy . " - is invalid extended permissions, it should be like 1.allow"
                     );
-                }              
+                }
                 // check if valid attribute for permissions
-               if(!in_array($permissionType, [ 'allow','deny'])) {
-                    throw new Exception($extendedBy." - only allow & deny are accepted for permissions (Spell check again). eg. 1.allow");
-               }
-               // existing permission
+                if (!in_array($permissionType, ['allow', 'deny'])) {
+                    throw new Exception($extendedBy . " - only allow & deny are accepted for permissions (Spell check again). eg. 1.allow");
+                }
+                // existing permission
                 $extendedPermissionContainer = array_get($originalRoleItem, $permissionType, []);
                 // extended role permission item
                 $extendRoleItem = array_get($availalbleRoleItems, $roleId, null);
                 // if requested role is not found
-                if(!$extendRoleItem) {
-                    throw new Exception($roleId." - requested role is not available");
+                if (!$extendRoleItem) {
+                    throw new Exception($roleId . " - requested role is not available");
                 }
                 // grab main sudo ids
                 $requestedItemPseudoAccessIds = array_intersect(
@@ -1737,16 +1753,17 @@ class YesAuthority
                 ));
                 // remove the pseudo access ids
                 $extendedPermissionContainer = array_diff(
-                    $extendedPermissionContainer, 
+                    $extendedPermissionContainer,
                     array_diff($this->pseudoAccessIds, $requestedItemPseudoAccessIds)
                 );
                 // set the refined permitted access ids on to the container
-                array_set($this->permissions, 
-                    'rules.roles.'.$requestedRoleId.'.'.$permissionType, 
+                array_set(
+                    $this->permissions,
+                    'rules.roles.' . $requestedRoleId . '.' . $permissionType,
                     $extendedPermissionContainer
                 );
                 // check if the internal extends is there
-                if(array_has($extendRoleItem, 'extends') and !empty($extendRoleItem['extends'])) {
+                if (array_has($extendRoleItem, 'extends') and !empty($extendRoleItem['extends'])) {
                     // if so repeat the flow
                     $this->extendRolePermissions($requestedRoleId, $roleId);
                 }
@@ -1758,5 +1775,5 @@ class YesAuthority
         unset($availalbleRoleItems, $originalRoleItem, $ruleKey, $ruleValue, $requestedRoleId);
         // all done
         return true;
-    }        
+    }
 }
